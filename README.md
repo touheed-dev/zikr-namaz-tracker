@@ -22,8 +22,8 @@ You need Node 22+, Docker (for `supabase start`) and the [Supabase CLI](https://
 
 ```bash
 # 1. Database + auth (Docker)
-supabase start                 # applies migrations + seed.sql (badge defs, demo users)
-supabase status                # copy "API URL" and "anon key"
+npx supabase start                 # applies migrations + seed.sql (badge defs, demo users)
+npx supabase status                # copy "API URL" and "anon key"
 
 # 2. App
 cd web
@@ -33,7 +33,6 @@ npm run dev                    # http://localhost:5173
 ```
 
 Demo users from `seed.sql` (local only): `demo@zikr.local` / `password123` and `zaid@zikr.local` / `password123`.
-Local email (password reset) shows up in Inbucket at http://localhost:54324.
 
 ### Tests
 
@@ -63,9 +62,9 @@ in Vercel, or in a chat.** The browser only ever gets the URL and the anon key.
 
 ### 2.2 Push the schema
 ```bash
-supabase login                         # opens the browser
-supabase link --project-ref <ref>      # asks for the database password
-supabase db push                       # applies supabase/migrations/*.sql (seed.sql is NOT applied)
+npx supabase login                         # opens the browser
+npx supabase link --project-ref <ref>      # asks for the database password
+npx supabase db push --remote              # applies supabase/migrations/*.sql (seed.sql is NOT applied)
 ```
 Check it in **Table Editor**. You should see the tables with a lock icon (RLS on), and 11 rows in `badge_defs`.
 
