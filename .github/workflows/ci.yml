@@ -17,8 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      # Commit web/package-lock.json after your first `npm install` and switch this to `npm ci`.
-      - run: npm install --no-audit --no-fund
+      - run: npm ci
       - run: npm run lint
       - run: npm test
       - run: npm run build
@@ -71,7 +70,7 @@ jobs:
         run: ./supabase/tests/run.sh
         env:
           DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      - run: npm install --no-audit --no-fund
+      - run: npm ci
         working-directory: web
       - run: npx playwright install --with-deps chromium
         working-directory: web
