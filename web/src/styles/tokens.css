@@ -1,0 +1,51 @@
+:root {
+  --bg: #0E1B17;
+  --card: #16302A;
+  --card-deep: #1F4A3C;
+  --line: #2C4A41;
+  --line-soft: #234038;
+  --text: #F4EFE6;
+  --muted: #A9BDB5;
+  --accent: #1A7F45;
+  --accent-text: #FFFFFF; /* 5.0:1 on the accent green (cream would be 4.4:1) */
+  --light: #8FD3A8;
+  --light-text: #0E1B17;
+  --gold: #E9C46A;
+  --gold-text: #1B1405;
+  --danger: #E8B4A0;
+  --teal: #2A6F6A;
+  --inset: #0B1612;
+
+  /* Heatmap colours never change with the theme */
+  --heat-jamaat: #1A7F45;
+  --heat-alone: #8FD3A8;
+  --heat-qaza: #E9C46A;
+  --heat-dot: #1B1405;
+
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --pad: 20px;
+  --nav-h: 68px;
+  --focus: #E9C46A;
+
+  --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-head: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-ar: 'Amiri', 'Noto Naskh Arabic', 'Geeza Pro', serif;
+  color-scheme: dark;
+}
+
+:root[data-theme='ramadan'] {
+  --bg: #0B1020;
+  --card: #151C33;
+  --card-deep: #1B2442;
+  --line: #2A3556;
+  --line-soft: #222B48;
+  --muted: #B9C1DC;
+  --accent: #E9C46A;
+  --accent-text: #0B1020;
+  --light: #E9C46A;
+  --light-text: #0B1020;
+  --inset: #0E1428;
+  --teal: #2B6F78;
+}

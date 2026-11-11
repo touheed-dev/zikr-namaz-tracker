@@ -1,0 +1,13 @@
+{
+  "name": "Zikr & Namaz Tracker",
+  "short_name": "Zikr & Namaz",
+  "description": "A private habit tracker for Namaz, Zikr, Quran and nafl.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0E1B17",
+  "theme_color": "#0E1B17",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
