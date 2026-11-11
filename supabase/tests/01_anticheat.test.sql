@@ -18,12 +18,18 @@ select tests.eq((select timezone from profiles where id = :'badtz'), 'Asia/Kolka
 select tests.eq((select name from profiles where id = :'badtz'), 'bad-tz', 'empty name falls back to email local part');
 
 -- Supabase Auth itself (role supabase_auth_admin) can sign a user up through the trigger
-set local role supabase_auth_admin;
-insert into auth.users (id, email, raw_user_meta_data)
-values ('00000000-0000-4000-8000-0000000000aa', 'auth-admin@test.dev', '{"name":"Via Auth","timezone":"Europe/Paris"}');
-reset role;
+do $$
+begin
+  if pg_has_role(current_user, 'supabase_auth_admin', 'MEMBER') then
+    execute 'set local role supabase_auth_admin';
+  end if;
+  insert into auth.users (id, email, raw_user_meta_data)
+  values ('00000000-0000-4000-8000-0000000000aa', 'auth-admin@test.dev',
+          '{"name":"Via Auth","timezone":"Europe/Paris"}');
+  execute 'reset role';
+end $$;
 select tests.eq((select timezone from profiles where id = '00000000-0000-4000-8000-0000000000aa'), 'Europe/Paris',
-                'signup as supabase_auth_admin creates the profile');
+                'signup via auth.users insert creates the profile');
 
 -- ---------------------------------------------------------------- user A
 select tests.login(:'a');

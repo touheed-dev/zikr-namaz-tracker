@@ -112,7 +112,10 @@ select tests.eq((select count(*) from friendships)::int, 0, 'stranger cannot see
 select tests.eq((select count(*) from friend_requests)::int, 0, 'stranger cannot see others'' requests');
 select remove_friend(:'a');
 reset role;
-select tests.eq((select count(*) from friendships)::int, 1, 'stranger remove_friend has no effect');
+select tests.eq((select count(*) from friendships
+                 where least(requester, addressee) = least(:'a'::uuid, :'b'::uuid)
+                   and greatest(requester, addressee) = greatest(:'a'::uuid, :'b'::uuid))::int,
+                1, 'stranger remove_friend has no effect');
 
 -- --------------------------------------------- shareStats off hides A from B's leaderboard
 select tests.login(:'a');
