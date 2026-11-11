@@ -18,7 +18,7 @@ leaderboard, challenges, a weekly report and a Ramadan mode.
 
 ## 1. Run it locally
 
-You need Node 20+, Docker (for `supabase start`) and the [Supabase CLI](https://supabase.com/docs/guides/cli).
+You need Node 22+, Docker (for `supabase start`) and the [Supabase CLI](https://supabase.com/docs/guides/cli).
 
 ```bash
 # 1. Database + auth (Docker)
