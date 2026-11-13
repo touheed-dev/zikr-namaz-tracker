@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext.jsx';
 export function useFriends(period) {
   const toast = useToast();
   const board = useAsync(() => friends.leaderboard(period), [period]);
+  const globalBoard = useAsync(() => friends.global(period), [period]);
   const requests = useAsync(() => friends.requests(), []);
   const [busy, setBusy] = useState(null);
 
@@ -15,7 +16,11 @@ export function useFriends(period) {
     try {
       const res = await fn();
       if (okMessage) toast.show(okMessage);
-      await Promise.all([board.reload({ silent: true }), requests.reload({ silent: true })]);
+      await Promise.all([
+        board.reload({ silent: true }),
+        globalBoard.reload({ silent: true }),
+        requests.reload({ silent: true }),
+      ]);
       return res;
     } catch (err) {
       if (!err.auth) toast.show(err.message);
@@ -23,9 +28,42 @@ export function useFriends(period) {
     } finally {
       setBusy(null);
     }
-  }, [busy, board, requests, toast]);
+  }, [busy, board, globalBoard, requests, toast]);
 
   const invite = useCallback((email) => act('invite', () => friends.invite(email)), [act]);
+
+  const inviteUser = useCallback((id) => {
+    // Optimistic update for global board
+    globalBoard.setData((data) => {
+      if (!data?.rows) return data;
+      return {
+        ...data,
+        rows: data.rows.map((r) => (r.id === id ? { ...r, requested: true } : r)),
+      };
+    });
+    return act(`inviteUser:${id}`, () => friends.inviteUser(id), 'Friend request sent').catch((err) => {
+      globalBoard.reload({ silent: true });
+      throw err;
+    });
+  }, [act, globalBoard]);
+
+  const block = useCallback((id, message = 'User blocked') => {
+    // Optimistically update
+    requests.setData((d) => (d ? {
+      incoming: d.incoming.filter((r) => r.id !== id),
+      outgoing: d.outgoing.filter((r) => r.id !== id),
+    } : d));
+    board.setData((rows) => (rows ? rows.filter((r) => r.id !== id) : rows));
+    return act(`block:${id}`, () => friends.block(id), message).catch((err) => {
+      requests.reload({ silent: true });
+      board.reload({ silent: true });
+      throw err;
+    });
+  }, [act, board, requests]);
+
+  const unblock = useCallback((id, message = 'User unblocked') => (
+    act(`unblock:${id}`, () => friends.unblock(id), message)
+  ), [act]);
 
   const accept = useCallback((id) => {
     // optimistic: drop it from incoming immediately
@@ -51,5 +89,5 @@ export function useFriends(period) {
     });
   }, [act, board, requests]);
 
-  return { board, requests, invite, accept, remove, busy };
+  return { board, globalBoard, requests, invite, inviteUser, block, unblock, accept, remove, busy };
 }

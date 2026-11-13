@@ -35,6 +35,22 @@ export const friends = {
   async badges(friendId) {
     return rpc('friend_badges', { p_friend_id: friendId });
   },
+  /** { rows: [{ id, username, points, streak, isMe, isFriend, requested }], me: { rank, points, optedIn, username } } */
+  async global(period = 'week') {
+    return rpc('get_global_leaderboard', { p_period: period });
+  },
+  async inviteUser(id) {
+    return rpc('send_friend_request_to_user', { p_user_id: id });
+  },
+  async block(id) {
+    return rpc('block_user', { p_user_id: id });
+  },
+  async unblock(id) {
+    return rpc('unblock_user', { p_user_id: id });
+  },
+  async blocked() {
+    return (await rpc('list_blocked')) || [];
+  },
 };
 
 // --------------------------------------------------------------- challenges
@@ -85,5 +101,8 @@ export const profile = {
   },
   async deleteAccount(confirmText) {
     return rpc('delete_my_account', { p_confirm: confirmText });
+  },
+  async setUsername(name) {
+    return rpc('set_username', { p_username: name });
   },
 };

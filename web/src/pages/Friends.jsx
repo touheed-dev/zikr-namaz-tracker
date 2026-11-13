@@ -1,9 +1,10 @@
 import { useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useFriends } from '../hooks/useFriends.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { friends as friendsApi } from '../api/index.js';
 import { Card, Tabs, Avatar, LoadingBlocks, ErrorState, EmptyState, Dialog, Icon, Skeleton } from '../components/ui/index.jsx';
+import { UsernameDialog } from '../components/ui/UsernameDialog.jsx';
 import { NamazHeatmap, NamazLegend } from '../components/heatmap/Heatmaps.jsx';
 import { PageHead } from '../components/layout/AppShell.jsx';
 import { formatPoints } from '../utils/points.js';
@@ -13,6 +14,11 @@ const PERIODS = [
   { value: 'week', label: 'This week' },
   { value: 'month', label: 'This month' },
   { value: 'all', label: 'All time' },
+];
+
+const SCOPE_TABS = [
+  { value: 'friends', label: 'Friends' },
+  { value: 'global', label: 'Global' },
 ];
 
 function HeadToHead({ rows }) {
@@ -79,14 +85,21 @@ function FriendSheet({ friend, onClose, onRemove, busy }) {
 }
 
 export default function Friends() {
-  const { user } = useAuth();
+  const { user, saveSettings } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const scope = searchParams.get('tab') === 'global' ? 'global' : 'friends';
   const [period, setPeriod] = useState('week');
-  const { board, requests, invite, accept, remove, busy } = useFriends(period);
+  const { board, globalBoard, requests, invite, inviteUser, block, accept, remove, busy } = useFriends(period);
   const [email, setEmail] = useState('');
   const [inviteMsg, setInviteMsg] = useState(null);
   const [inviteErr, setInviteErr] = useState(null);
   const [open, setOpen] = useState(null);
+  const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
   const inputRef = useRef(null);
+
+  const setScope = (val) => {
+    setSearchParams(val === 'global' ? { tab: 'global' } : {});
+  };
 
   const submitInvite = async (e) => {
     e.preventDefault();
@@ -111,6 +124,11 @@ export default function Friends() {
   };
 
   const rows = board.data || [];
+  const globalData = globalBoard.data;
+  const globalRows = globalData?.rows || [];
+  const globalMe = globalData?.me;
+  const isOptedIn = Boolean(globalMe?.optedIn || user?.settings?.showOnGlobal);
+
   const inc = requests.data?.incoming || [];
   const out = requests.data?.outgoing || [];
 
@@ -118,103 +136,212 @@ export default function Friends() {
     <>
       <PageHead
         title="Friends"
-        aside={(
+        aside={scope === 'friends' && (
           <button type="button" className="btn btn--sm" onClick={() => inputRef.current?.focus()}>
             <Icon name="plus" size={16} /> Add friend
           </button>
         )}
       />
+      <Tabs label="Leaderboard scope" items={SCOPE_TABS} value={scope} onChange={setScope} />
       <Tabs label="Leaderboard period" items={PERIODS} value={period} onChange={setPeriod} />
 
-      {board.loading && <LoadingBlocks heights={[110, 300]} />}
-      {!board.loading && board.error && <ErrorState error={board.error} onRetry={board.reload} />}
-      {!board.loading && !board.error && (
+      {scope === 'friends' && (
         <>
-          <HeadToHead rows={rows} />
-          <Card>
-            {rows.length <= 1 && (
-              <EmptyState icon="users" title="Just you for now">
-                Add a friend by email to compare points and streaks. They only see your name, points and streak.
-              </EmptyState>
-            )}
-            <ol className="list" aria-label="Leaderboard" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {rows.map((r, i) => (
-                <li key={r.id}>
-                  <button
-                    type="button"
-                    className={`list-row list-row--btn ${r.isMe ? 'list-row--me' : ''}`}
-                    onClick={() => !r.isMe && setOpen(r)}
-                    disabled={r.isMe}
-                    aria-label={`${i + 1}. ${r.isMe ? 'You' : r.name}, ${r.points} points, ${r.streak} day streak`}
-                  >
-                    <span className="rank">{i + 1}</span>
-                    <Avatar name={r.name} />
-                    <span className="grow">
-                      <span className="strong">{r.isMe ? 'You' : r.name}</span><br />
-                      <span className="small muted">{r.streak} day streak</span>
-                    </span>
-                    <span className="strong" style={{ color: 'var(--light)' }}>{formatPoints(r.points)}</span>
+          {board.loading && <LoadingBlocks heights={[110, 300]} />}
+          {!board.loading && board.error && <ErrorState error={board.error} onRetry={board.reload} />}
+          {!board.loading && !board.error && (
+            <>
+              <HeadToHead rows={rows} />
+              <Card>
+                {rows.length <= 1 && (
+                  <EmptyState icon="users" title="Just you for now">
+                    Add a friend by email to compare points and streaks. They only see your name, points and streak.
+                  </EmptyState>
+                )}
+                <ol className="list" aria-label="Leaderboard" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                  {rows.map((r, i) => (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        className={`list-row list-row--btn ${r.isMe ? 'list-row--me' : ''}`}
+                        onClick={() => !r.isMe && setOpen(r)}
+                        disabled={r.isMe}
+                        aria-label={`${i + 1}. ${r.isMe ? 'You' : r.name}, ${r.points} points, ${r.streak} day streak`}
+                      >
+                        <span className="rank">{i + 1}</span>
+                        <Avatar name={r.name} />
+                        <span className="grow">
+                          <span className="strong">{r.isMe ? 'You' : r.name}</span><br />
+                          <span className="small muted">{r.streak} day streak</span>
+                        </span>
+                        <span className="strong" style={{ color: 'var(--light)' }}>{formatPoints(r.points)}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </Card>
+            </>
+          )}
+
+          {requests.error && <ErrorState error={requests.error} onRetry={requests.reload} title="Could not load requests" />}
+          {inc.length > 0 && (
+            <Card title="Requests">
+              {inc.map((r) => (
+                <div key={r.id} className="list-row">
+                  <Avatar name={r.name} />
+                  <span className="grow">
+                    <span className="strong">{r.via === 'global' ? `@${r.name}` : r.name}</span>
+                    <br />
+                    {r.email && <span className="small muted">{r.email}</span>}
+                  </span>
+                  <button type="button" className="btn btn--primary btn--sm" disabled={Boolean(busy)} onClick={() => accept(r.id).catch(() => {})}>Accept</button>
+                  <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} aria-label={`Decline ${r.name}`} onClick={() => remove(r.id, 'Request declined').catch(() => {})}>
+                    <Icon name="close" size={18} />
                   </button>
-                </li>
+                  {r.via === 'global' && (
+                    <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} aria-label={`Block ${r.name}`} onClick={() => block(r.id, `${r.name} blocked`).catch(() => {})}>
+                      Block
+                    </button>
+                  )}
+                </div>
               ))}
-            </ol>
+            </Card>
+          )}
+
+          <Card title="Add a friend">
+            <form onSubmit={submitInvite} className="stack" noValidate>
+              <div className="field">
+                <label className="field__label" htmlFor="friend-email">Their email</label>
+                <input
+                  id="friend-email"
+                  ref={inputRef}
+                  className="input"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  aria-invalid={Boolean(inviteErr)}
+                  aria-describedby="invite-status"
+                />
+              </div>
+              <div id="invite-status" aria-live="polite">
+                {inviteErr && <div className="field__error">{inviteErr}</div>}
+                {inviteMsg && <div className="notice notice--ok">{inviteMsg}</div>}
+              </div>
+              <button type="submit" className="btn btn--primary" disabled={busy === 'invite'}>
+                {busy === 'invite' ? 'Sending…' : 'Send request'}
+              </button>
+            </form>
+            {out.length > 0 && (
+              <div>
+                <div className="small muted">Sent</div>
+                {out.map((r) => (
+                  <div key={r.id} className="list-row">
+                    <span className="grow small">{r.via === 'global' ? `@${r.username}` : r.email}</span>
+                    <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} onClick={() => remove(r.id, 'Request cancelled').catch(() => {})}>Cancel</button>
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         </>
       )}
 
-      {requests.error && <ErrorState error={requests.error} onRetry={requests.reload} title="Could not load requests" />}
-      {inc.length > 0 && (
-        <Card title="Requests">
-          {inc.map((r) => (
-            <div key={r.id} className="list-row">
-              <Avatar name={r.name} />
-              <span className="grow"><span className="strong">{r.name}</span><br /><span className="small muted">{r.email}</span></span>
-              <button type="button" className="btn btn--primary btn--sm" disabled={Boolean(busy)} onClick={() => accept(r.id).catch(() => {})}>Accept</button>
-              <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} aria-label={`Decline ${r.name}`} onClick={() => remove(r.id, 'Request declined').catch(() => {})}>
-                <Icon name="close" size={18} />
+      {scope === 'global' && (
+        <>
+          {!isOptedIn && (
+            <Card className="card--deep">
+              <div className="strong">Show yourself on the global leaderboard</div>
+              <p className="small muted">
+                Show yourself on the global leaderboard. Others see only your username, points and streak.
+              </p>
+              <button
+                type="button"
+                className="btn btn--primary btn--sm"
+                onClick={() => setUsernameDialogOpen(true)}
+              >
+                Join global leaderboard
               </button>
-            </div>
-          ))}
-        </Card>
-      )}
+            </Card>
+          )}
 
-      <Card title="Add a friend">
-        <form onSubmit={submitInvite} className="stack" noValidate>
-          <div className="field">
-            <label className="field__label" htmlFor="friend-email">Their email</label>
-            <input
-              id="friend-email"
-              ref={inputRef}
-              className="input"
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              aria-invalid={Boolean(inviteErr)}
-              aria-describedby="invite-status"
-            />
-          </div>
-          <div id="invite-status" aria-live="polite">
-            {inviteErr && <div className="field__error">{inviteErr}</div>}
-            {inviteMsg && <div className="notice notice--ok">{inviteMsg}</div>}
-          </div>
-          <button type="submit" className="btn btn--primary" disabled={busy === 'invite'}>
-            {busy === 'invite' ? 'Sending…' : 'Send request'}
-          </button>
-        </form>
-        {out.length > 0 && (
-          <div>
-            <div className="small muted">Sent</div>
-            {out.map((r) => (
-              <div key={r.id} className="list-row">
-                <span className="grow small">{r.email}</span>
-                <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} onClick={() => remove(r.id, 'Request cancelled').catch(() => {})}>Cancel</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
+          {globalBoard.loading && <LoadingBlocks heights={[110, 300]} />}
+          {!globalBoard.loading && globalBoard.error && (
+            <ErrorState error={globalBoard.error} onRetry={globalBoard.reload} />
+          )}
+          {!globalBoard.loading && !globalBoard.error && (
+            <Card>
+              {globalRows.length === 0 ? (
+                <EmptyState icon="users" title="No one has joined yet">
+                  Opt-in active users who log prayers will appear on this leaderboard.
+                </EmptyState>
+              ) : (
+                <ol className="list" aria-label="Global leaderboard" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                  {globalRows.map((r, i) => (
+                    <li key={r.id}>
+                      <div className={`list-row ${r.isMe ? 'list-row--me' : ''}`} style={{ alignItems: 'center' }}>
+                        <span className="rank">{i + 1}</span>
+                        <Avatar name={r.username} />
+                        <span className="grow">
+                          <span className="strong">@{r.username}{r.isMe ? ' (You)' : ''}</span><br />
+                          <span className="small muted">{r.streak} day streak</span>
+                        </span>
+                        <span className="strong" style={{ color: 'var(--light)', marginRight: 12 }}>
+                          {formatPoints(r.points)}
+                        </span>
+                        {!r.isMe && (
+                          r.isFriend ? (
+                            <span className="chip chip--light">Friends</span>
+                          ) : r.requested ? (
+                            <button type="button" className="btn btn--sm btn--ghost" disabled>
+                              Requested
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn--sm btn--primary"
+                              disabled={Boolean(busy)}
+                              onClick={() => inviteUser(r.id)}
+                            >
+                              Add friend
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </Card>
+          )}
+
+          {requests.error && <ErrorState error={requests.error} onRetry={requests.reload} title="Could not load requests" />}
+          {inc.length > 0 && (
+            <Card title="Requests">
+              {inc.map((r) => (
+                <div key={r.id} className="list-row">
+                  <Avatar name={r.name} />
+                  <span className="grow">
+                    <span className="strong">{r.via === 'global' ? `@${r.name}` : r.name}</span>
+                    <br />
+                    {r.email && <span className="small muted">{r.email}</span>}
+                  </span>
+                  <button type="button" className="btn btn--primary btn--sm" disabled={Boolean(busy)} onClick={() => accept(r.id).catch(() => {})}>Accept</button>
+                  <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} aria-label={`Decline ${r.name}`} onClick={() => remove(r.id, 'Request declined').catch(() => {})}>
+                    <Icon name="close" size={18} />
+                  </button>
+                  {r.via === 'global' && (
+                    <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} aria-label={`Block ${r.name}`} onClick={() => block(r.id, `${r.name} blocked`).catch(() => {})}>
+                      Block
+                    </button>
+                  )}
+                </div>
+              ))}
+            </Card>
+          )}
+        </>
+      )}
 
       <Link to="/challenges" className="btn btn--block">Challenges with friends</Link>
 
@@ -234,6 +361,17 @@ export default function Friends() {
           onRemove={async (f) => {
             setOpen(null);
             await remove(f.id, `${f.name} removed`).catch(() => {});
+          }}
+        />
+      )}
+
+      {usernameDialogOpen && (
+        <UsernameDialog
+          onClose={() => setUsernameDialogOpen(false)}
+          currentUsername={user?.username}
+          onSaved={async () => {
+            await saveSettings({ showOnGlobal: true });
+            globalBoard.reload({ silent: true });
           }}
         />
       )}
