@@ -12,7 +12,7 @@ import { GlobalAnnouncementCard } from '../components/ui/GlobalAnnouncementCard.
 import { Card, Icon, Skeleton, ErrorState } from '../components/ui/index.jsx';
 import { formatDay, dayOfYear } from '../utils/dates.js';
 import { PRAYERS, PRAYER_LABELS, DONE_STATUSES, NAFL_ITEMS, formatPoints, paraLabel } from '../utils/points.js';
-import { formatTime12, minutesUntil } from '../utils/prayerTimes.js';
+import { formatTime12, minutesUntil, getCurrentAndNextPrayer, formatLiveCountdown } from '../utils/prayerTimes.js';
 import RamadanToday from './RamadanToday.jsx';
 
 export default function Today() {
@@ -64,7 +64,7 @@ function ReminderLine({ children }) {
 function NormalToday() {
   const { user } = useAuth();
   const today = useToday();
-  const now = useNow(30000);
+  const now = useNow(1000);
   const summary = useSummary();
   const pr = usePrayers(today, today);
   const zk = useZikr(today, today);
@@ -72,6 +72,9 @@ function NormalToday() {
   const qr = useQuran(today, today);
   const { times, error: timesError } = usePrayerTimes(today);
   const [qazaUsed, setQazaUsed] = useState(false);
+
+  const hasLocation = user?.settings?.lat != null && user?.settings?.lng != null;
+  const prayerInfo = useMemo(() => getCurrentAndNextPrayer(times, now), [times, now]);
 
   const doneToday = pr.entries.filter((e) => e.date === today && DONE_STATUSES.includes(e.status)).length;
   const next = useMemo(() => nextPrayer(times, now), [times, now]);
@@ -153,6 +156,50 @@ function NormalToday() {
 
       <div className="layout-2col">
         <div className="layout-2col__left">
+          {!hasLocation && (
+            <div className="card card--deep mb-12">
+              <div className="row row--between" style={{ gap: 12, alignItems: 'center' }}>
+                <div className="row" style={{ gap: 10 }}>
+                  <Icon name="compass" size={20} className="accent-color" />
+                  <div className="small">
+                    <div className="strong">Set your location for accurate times</div>
+                    <div className="tiny muted">Currently using Mumbai, India as default.</div>
+                  </div>
+                </div>
+                <Link to="/times" className="btn btn--sm btn--primary" style={{ whiteSpace: 'nowrap' }}>
+                  Set location
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {prayerInfo && (
+            <Card
+              title="Now"
+              aside={<Link to="/times" className="linkbtn small">Timetable →</Link>}
+            >
+              <div className="row row--between" style={{ alignItems: 'baseline', gap: 12 }}>
+                <div>
+                  <span className="tiny muted uppercase" style={{ letterSpacing: '0.04em' }}>Current: </span>
+                  <span className="strong" style={{ fontSize: 16 }}>{prayerInfo.current.label}</span>
+                  {prayerInfo.current.time && (
+                    <span className="small muted"> ({formatTime12(prayerInfo.current.time)})</span>
+                  )}
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <span className="tiny muted uppercase" style={{ letterSpacing: '0.04em' }}>Next: </span>
+                  <span className="strong accent-color" style={{ fontSize: 16 }}>{prayerInfo.next.label}</span>
+                  {prayerInfo.next.time && (
+                    <span className="small muted"> at {formatTime12(prayerInfo.next.time)}</span>
+                  )}
+                  <div className="small muted mt-2" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    in <span className="strong">{formatLiveCountdown(prayerInfo.next.diffMs)}</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card title="Namaz" aside="Jamaat +10 · Alone +4">
             {pr.loading && <Skeleton height={330} />}
             {!pr.loading && pr.error && <ErrorState error={pr.error} onRetry={pr.reload} />}

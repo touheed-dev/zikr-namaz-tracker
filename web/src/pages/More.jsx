@@ -4,7 +4,7 @@ import { PageHead } from '../components/layout/AppShell.jsx';
 import { Card, Icon } from '../components/ui/index.jsx';
 
 // Feature flag: Prayer times route (/times) will be added in a future update.
-const ENABLE_PRAYER_TIMES = false;
+const ENABLE_PRAYER_TIMES = true;
 
 const MORE_LINKS = [
   {
@@ -12,6 +12,13 @@ const MORE_LINKS = [
     title: 'Profile & settings',
     hint: 'Themes, prayer location, reminders and privacy',
     icon: 'settings',
+  },
+  {
+    to: '/times',
+    title: 'Prayer times',
+    hint: 'Daily timetable, location and calculation settings',
+    icon: 'clock',
+    enabled: ENABLE_PRAYER_TIMES,
   },
   {
     to: '/nafl',

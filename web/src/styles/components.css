@@ -1023,3 +1023,80 @@
   padding: 2px 8px;
   min-height: 20px;
 }
+
+/* ---------------------------------------------------- timetable */
+.timetable-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.timetable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+.timetable th,
+.timetable td {
+  padding: 10px 8px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line-soft);
+}
+.timetable th {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.timetable tr.is-today {
+  background: var(--card-deep);
+  font-weight: 600;
+}
+.timetable tr:last-child td {
+  border-bottom: none;
+}
+.timetable__cell-active {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------- now card & timetable items */
+.today-prayer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+@media (min-width: 480px) {
+  .today-prayer-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.today-prayer-item {
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--inset);
+  border: 1px solid var(--line-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.today-prayer-item--active {
+  border-color: var(--light);
+  background: var(--card-deep);
+}
+.today-prayer-item__name {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.today-prayer-item--active .today-prayer-item__name {
+  color: var(--light);
+}
+.today-prayer-item__time {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
