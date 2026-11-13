@@ -19,3 +19,4 @@ export function dismissGlobalAnnouncement() {
     window.dispatchEvent(new Event('zn:announce_dismissed'));
   }
 }
+
