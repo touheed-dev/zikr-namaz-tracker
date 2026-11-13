@@ -148,19 +148,22 @@ function LocationCard() {
       </form>
       <div className="field">
         <label className="field__label" htmlFor="method">Calculation method</label>
-        <select id="method" className="select" value={s.method} disabled={busy.has('method')} onChange={(e) => save({ method: Number(e.target.value) })}>
+        <select id="method" className="select" value={s.method || 'karachi'} disabled={busy.has('method')} onChange={(e) => save({ method: e.target.value })}>
           {METHODS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
         </select>
       </div>
       <div>
         <div className="field__label" id="asr-label">Asr</div>
         <div className="row" role="group" aria-labelledby="asr-label">
-          {[['standard', 'Standard'], ['hanafi', 'Hanafi']].map(([v, l]) => (
-            <button key={v} type="button" className="chip chip--btn" aria-pressed={s.asr === v} disabled={busy.has('asr')} onClick={() => save({ asr: v })}>{l}</button>
+          {[['hanafi', 'Hanafi (Later Asr)'], ['standard', 'Shafi / Standard']].map(([v, l]) => (
+            <button key={v} type="button" className="chip chip--btn" aria-pressed={(s.madhab === 'hanafi' || s.asr === 'hanafi' || (!s.madhab && !s.asr)) ? v === 'hanafi' : v === 'standard'} disabled={busy.has('asr') || busy.has('madhab')} onClick={() => save({ asr: v, madhab: v === 'hanafi' ? 'hanafi' : 'shafi' })}>{l}</button>
           ))}
         </div>
       </div>
-      <div className="tiny muted">Times from Aladhan, cached for the day on this device.</div>
+      <div className="row row--between pt-4">
+        <div className="tiny muted">Calculated on-device, works offline.</div>
+        <Link to="/times" className="linkbtn small">Full timetable & location →</Link>
+      </div>
     </Card>
   );
 }

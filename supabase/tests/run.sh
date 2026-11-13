@@ -39,7 +39,7 @@ for t in "$HERE"/*.test.sql; do
     pass=$((pass + n))
   else
     echo "FAIL $name"
-    grep -E 'ok - |FAIL|ERROR' <<<"$out" | tail -n 15
+    echo "$out"
     fail=$((fail + 1))
   fi
 done

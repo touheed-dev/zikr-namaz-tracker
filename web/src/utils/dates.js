@@ -5,11 +5,22 @@
 const pad = (n) => String(n).padStart(2, '0');
 
 export function toISODate(d) {
+  if (!d) return '';
+  if (typeof d === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+    const parsed = new Date(d);
+    if (!isNaN(parsed.getTime())) d = parsed;
+    else return '';
+  }
+  if (!(d instanceof Date) || isNaN(d.getTime())) return '';
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 export function parseISO(iso) {
+  if (iso instanceof Date) return iso;
+  if (!iso || typeof iso !== 'string') return new Date();
   const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return new Date();
   return new Date(y, m - 1, d);
 }
 

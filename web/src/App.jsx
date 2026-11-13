@@ -16,13 +16,14 @@ const Badges = lazy(() => import('./pages/Badges.jsx'));
 const Report = lazy(() => import('./pages/Report.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
 const RamadanMap = lazy(() => import('./pages/RamadanMap.jsx'));
+const Times = lazy(() => import('./pages/Times.jsx'));
 const More = lazy(() => import('./pages/More.jsx'));
 
 const TITLES = {
   '/': 'Today', '/streak': 'Track', '/history': 'Log and edit', '/quran': 'Quran', '/nafl': 'Nafl',
   '/friends': 'Friends', '/challenges': 'Challenges', '/challenges/personal': 'Personal challenges',
   '/badges': 'Badges', '/report': 'Weekly report', '/profile': 'Profile', '/ramadan/map': 'Ramadan map',
-  '/more': 'More',
+  '/times': 'Prayer times', '/more': 'More',
   '/login': 'Sign in', '/signup': 'Sign up', '/forgot-password': 'Forgot password', '/reset-password': 'Reset password',
 };
 
@@ -60,6 +61,7 @@ export default function App() {
             <Route path="/report" element={<Report />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/ramadan/map" element={<RamadanMap />} />
+            <Route path="/times" element={<Times />} />
             <Route path="/more" element={<More />} />
             <Route path="*" element={<NotFound />} />
           </Route>

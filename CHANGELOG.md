@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-11-14
+
+### Added
+- On-device offline prayer times powered by `adhan` (adhan-js), eliminating external API dependency for timings.
+- Location support with "Use my location" (`navigator.geolocation`) and city search via Open-Meteo geocoding API (`https://geocoding-api.open-meteo.com`).
+- Privacy-first location storage: latitude and longitude are rounded to 2 decimal places (~1 km radius) before persisting.
+- Calculation method settings: Karachi (default for India / Pakistan), MWL, ISNA, Umm al-Qura, Egyptian, Dubai, and Singapore.
+- Asr calculation madhab setting: Hanafi (default, 2x shadow) and Shafi / Standard (1x shadow).
+- High-latitude rules support: None, Middle of the night, Seventh of the night, and Twilight angle rule.
+- Isha end time preference: Until Fajr (default) or Islamic Midnight.
+- Dedicated `/times` page featuring today's prayer timetable, next 7 days schedule, interactive location search/detection, and calculation settings.
+- "Now" card on Today screen displaying current prayer period, next prayer, and live countdown timer.
+- Location prompt card on Today and Times screens when location is not yet configured.
+- Database migration `20261115000001_prayer_location.sql` extending `update_settings` with input validation for coordinates, location labels, methods, madhabs, and rules, and updating `export_my_data`.
+- CSP update in `vercel.json` permitting `https://geocoding-api.open-meteo.com` and enabling `geolocation=(self)` in Permissions-Policy.
+
 ## [1.3.2] - 2026-11-14
 
 ### Added
