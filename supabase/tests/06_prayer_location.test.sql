@@ -33,12 +33,12 @@ select tests.eq((:'res'::jsonb -> 'settings' ->> 'highLat')::text, 'middleofthen
 select tests.eq((:'res'::jsonb -> 'settings' ->> 'ishaEnd')::text, 'midnight'::text, 'ishaEnd saved');
 
 -- Shafi madhab and fajr ishaEnd accepted
-select update_settings('{"madhab": "shafi", "ishaEnd": "fajr"}') as res2 \gset;
+select update_settings('{"madhab": "shafi", "ishaEnd": "fajr"}') as res2 \gset
 select tests.eq((:'res2'::jsonb -> 'settings' ->> 'madhab')::text, 'shafi'::text, 'shafi madhab saved');
 select tests.eq((:'res2'::jsonb -> 'settings' ->> 'ishaEnd')::text, 'fajr'::text, 'fajr ishaEnd saved');
 
 -- Null / clearing coordinates accepted
-select update_settings('{"lat": null, "lng": null, "locationLabel": null}') as res_clear \gset;
+select update_settings('{"lat": null, "lng": null, "locationLabel": null}') as res_clear \gset
 select tests.ok((:'res_clear'::jsonb -> 'settings' ->> 'lat') is null, 'lat cleared to null');
 select tests.ok((:'res_clear'::jsonb -> 'settings' ->> 'lng') is null, 'lng cleared to null');
 select tests.ok((:'res_clear'::jsonb -> 'settings' ->> 'locationLabel') is null, 'locationLabel cleared to null');
@@ -75,7 +75,7 @@ select update_settings('{
   "timezone": "Asia/Kolkata",
   "azanAlert": true,
   "smartFix": false
-}') as res_old \gset;
+}') as res_old \gset
 
 select tests.eq((:'res_old'::jsonb -> 'settings' ->> 'city')::text, 'Hyderabad'::text, 'old city key works');
 select tests.eq((:'res_old'::jsonb -> 'settings' ->> 'country')::text, 'India'::text, 'old country key works');
@@ -88,7 +88,7 @@ select tests.eq((:'res_old'::jsonb ->> 'name')::text, 'Prayer User Renamed'::tex
 -- -----------------------------------------------------------------------------
 select update_settings('{"lat": 17.38, "lng": 78.48, "locationLabel": "Hyderabad, India"}');
 
-select export_my_data() as exp \gset;
+select export_my_data() as exp \gset
 select tests.eq((:'exp'::jsonb -> 'prayerLocation' ->> 'lat')::numeric, 17.38::numeric, 'export_my_data includes lat');
 select tests.eq((:'exp'::jsonb -> 'prayerLocation' ->> 'lng')::numeric, 78.48::numeric, 'export_my_data includes lng');
 select tests.eq((:'exp'::jsonb -> 'prayerLocation' ->> 'label')::text, 'Hyderabad, India'::text, 'export_my_data includes label');
@@ -100,11 +100,10 @@ reset role;
 select tests.login(:'u2');
 set local role authenticated;
 
--- User 2 cannot see User 1's profile settings directly
-select tests.throws(
-  $q$ select settings from public.profiles where id = :'u1' $q$,
-  'permission denied',
-  'direct read of another profile denied'
-);
+-- User 2 cannot see User 1's profile row or settings directly (RLS filters out other profiles)
+select tests.eq((select count(*) from public.profiles where id = :'u1')::int, 0, 'User 2 cannot read User 1 profile row');
+select tests.eq((select count(*) from public.profiles)::int, 1, 'User 2 sees only their own profile');
+select tests.ok((select settings from public.profiles where id = :'u1') is null, 'direct read of another profile returns null');
+select tests.throws($q$ update public.profiles set settings = '{}' where id = :'u1' $q$, 'permission denied', 'direct profile update denied');
 
 rollback;

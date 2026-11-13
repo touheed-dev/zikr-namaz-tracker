@@ -158,9 +158,9 @@ begin
     'exportedAt', app_private.now(),
     'user', app_private.user_json(v_uid),
     'prayerLocation', jsonb_build_object(
-      'lat', v_settings->'lat',
-      'lng', v_settings->'lng',
-      'label', coalesce(v_settings->'locationLabel', v_settings->'label', v_settings->'city')
+      'lat', (v_settings->>'lat')::numeric,
+      'lng', (v_settings->>'lng')::numeric,
+      'label', coalesce(v_settings->>'locationLabel', v_settings->>'label', v_settings->>'city')
     ),
     'prayerLogs', coalesce((select jsonb_agg(to_jsonb(t) - 'user_id' order by log_date, prayer)
                             from public.prayer_logs t where user_id = v_uid), '[]'),
