@@ -47,3 +47,4 @@ test('global announcement visibility', () => {
     'dismissed false-case',
   );
 });
+

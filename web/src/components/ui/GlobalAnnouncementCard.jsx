@@ -44,8 +44,29 @@ export function GlobalAnnouncementCard() {
   };
 
   return (
-    <div className="card card--gold row row--between" role="status" style={{ alignItems: 'flex-start' }}>
-      <div className="row" style={{ alignItems: 'flex-start', gap: 12 }}>
+    <div className="card card--gold" role="status" style={{ position: 'relative' }}>
+      <button
+        type="button"
+        className="btn btn--ghost btn--sm"
+        onClick={handleDismiss}
+        aria-label="Dismiss"
+        style={{
+          position: 'absolute',
+          top: 10,
+          right: 10,
+          width: 44,
+          height: 44,
+          minWidth: 44,
+          minHeight: 44,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 0,
+        }}
+      >
+        <Icon name="close" size={18} />
+      </button>
+      <div className="row" style={{ alignItems: 'flex-start', gap: 12, paddingRight: 36 }}>
         <span style={{ color: 'var(--gold)', marginTop: 2 }}>
           <Icon name="sparkle" size={20} />
         </span>
@@ -66,14 +87,6 @@ export function GlobalAnnouncementCard() {
           </div>
         </div>
       </div>
-      <button
-        type="button"
-        className="btn btn--ghost btn--sm"
-        onClick={handleDismiss}
-        aria-label="Dismiss"
-      >
-        <Icon name="close" size={18} />
-      </button>
     </div>
   );
 }
