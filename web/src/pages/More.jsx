@@ -40,7 +40,7 @@ const MORE_LINKS = [
   {
     to: '/challenges',
     title: 'Challenges',
-    hint: 'Join community challenges and earn bonus points',
+    hint: 'Goals with friends or just for you',
     icon: 'target',
   },
   {
@@ -54,11 +54,10 @@ const MORE_LINKS = [
 
 export default function More() {
   const { user } = useAuth();
-  const subTitle = user?.username ? `${user.name} · @${user.username}` : (user?.name || '');
 
   return (
     <>
-      <PageHead title="More" sub={subTitle} />
+      <PageHead title="More" />
 
       <div className="card card--deep" style={{ marginBottom: 12 }}>
         <div className="row" style={{ gap: 14, alignItems: 'center' }}>
@@ -115,3 +114,4 @@ export default function More() {
     </>
   );
 }
+
