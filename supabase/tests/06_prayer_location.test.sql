@@ -104,6 +104,10 @@ set local role authenticated;
 select tests.eq((select count(*) from public.profiles where id = :'u1')::int, 0, 'User 2 cannot read User 1 profile row');
 select tests.eq((select count(*) from public.profiles)::int, 1, 'User 2 sees only their own profile');
 select tests.ok((select settings from public.profiles where id = :'u1') is null, 'direct read of another profile returns null');
-select tests.throws($q$ update public.profiles set settings = '{}' where id = :'u1' $q$, 'permission denied', 'direct profile update denied');
+select tests.throws(
+  format('update public.profiles set settings = settings where id = %L', :'u1'),
+  'permission denied',
+  'direct profile update denied'
+);
 
 rollback;
