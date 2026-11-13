@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-11-14
+
+### Added
+- Browse Quran with toggle between "By Surah" and "By Juz".
+- "By Juz" collapsible accordion with 30 Juz sections showing Arabic names and surahs starting in each Juz.
+- "By Surah" collapsible accordion with 12 groups of 10 surahs (1-10, 11-20, ... 111-114) and instantaneous search filtering by surah name or number.
+- `juzStart` property added to all 114 surahs and exported 30-Juz metadata list `JUZ_LIST` in `assets/surahs.js`.
+- LocalStorage persistence for selected browse mode and last opened collapsible section.
+- Playing indicator and highlighted styling on currently playing surah across all sections.
+- Quran mini player seek controls: -10s rewind and +10s forward buttons, plus an accessible draggable seeker progress bar.
+- Interactive "Now Playing" sheet opened by tapping mini-player title, featuring full Arabic and English titles, reciter name, duration slider, -10s/+10s seek buttons, play/pause, and previous/next surah navigation.
+- Full Media Session API handlers for `seekbackward`, `seekforward`, `seekto`, `previoustrack`, and `nexttrack`.
+
 ## [1.3.1] - 2026-11-14
 
 ### Fixed

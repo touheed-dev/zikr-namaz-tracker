@@ -52,6 +52,34 @@ const PATHS = {
   close: <path d="M6 6l12 12M18 6L6 18" />,
   chevronRight: <path d="M9 5l7 7-7 7" />,
   chevronLeft: <path d="M15 5l-7 7 7 7" />,
+  chevronDown: <path d="M6 9l6 6 6-6" />,
+  chevronUp: <path d="M18 15l-6-6-6 6" />,
+  skipBack: (
+    <>
+      <polygon points="19 20 9 12 19 4 19 20" fill="currentColor" />
+      <line x1="5" y1="19" x2="5" y2="5" />
+    </>
+  ),
+  skipForward: (
+    <>
+      <polygon points="5 4 15 12 5 20 5 4" fill="currentColor" />
+      <line x1="19" y1="5" x2="19" y2="19" />
+    </>
+  ),
+  rewind10: (
+    <>
+      <path d="M12 4a8 8 0 1 0 8 8" />
+      <path d="M12 1v6l-4-3z" fill="currentColor" />
+      <text x="12" y="14.5" fontSize="7" fontWeight="bold" textAnchor="middle" fill="currentColor" stroke="none">10</text>
+    </>
+  ),
+  forward10: (
+    <>
+      <path d="M12 4a8 8 0 1 1-8 8" />
+      <path d="M12 1v6l4-3z" fill="currentColor" />
+      <text x="12" y="14.5" fontSize="7" fontWeight="bold" textAnchor="middle" fill="currentColor" stroke="none">10</text>
+    </>
+  ),
   star: <path d="M12 3.8l2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z" />,
   alert: (
     <>
