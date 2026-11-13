@@ -331,8 +331,8 @@ export default function Quran() {
                 {isKhatamPlaying
                   ? 'Pause khatam'
                   : player.summary?.position?.position_seconds > 0 || (isKhatamActive && player.currentTime > 0)
-                  ? `Resume Khatam (${khatamSurahObj.en})`
-                  : `Start Khatam (${khatamSurahObj.en})`}
+                    ? `Resume Khatam (${khatamSurahObj.en})`
+                    : `Start Khatam (${khatamSurahObj.en})`}
               </span>
             </button>
             <div className="tiny muted center">
