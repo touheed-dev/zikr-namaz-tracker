@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth, useToday } from '../context/AuthContext.jsx';
 import { useMode } from '../context/ModeContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { usePrayers } from '../hooks/useLogs.js';
 import { useAsync } from '../hooks/useAsync.js';
@@ -48,6 +49,69 @@ function QazaCard() {
         </div>
       </div>
       <Link to={`/history?date=${missed[0].date}`} className="btn">Mark one as made up</Link>
+    </Card>
+  );
+}
+
+function ThemeCard() {
+  const { theme, setTheme, palettes } = useTheme();
+  const current = palettes[theme] || palettes.forest;
+
+  return (
+    <Card title="Theme" aside={current.label}>
+      <div className="small muted">Choose your preferred palette on this device.</div>
+      <div className="theme-swatches" role="group" aria-label="Theme selection">
+        {Object.values(palettes).map((p) => {
+          const isSelected = theme === p.id;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              className="theme-swatch"
+              aria-pressed={isSelected}
+              aria-label={p.label}
+              onClick={() => setTheme(p.id)}
+              style={{
+                '--swatch-card': p.colors.card,
+                '--swatch-accent': p.colors.accent,
+                borderColor: isSelected ? p.colors.light : p.colors.line,
+              }}
+            >
+              {isSelected && (
+                <Icon
+                  name="check"
+                  size={16}
+                  strokeWidth={2.8}
+                  style={{
+                    color: p.colorScheme === 'light' ? p.colors.accentText : '#FFFFFF',
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="theme-preview">
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div className="strong" style={{ fontSize: 14 }}>{current.label}</div>
+            <div className="tiny muted">{current.hint}</div>
+          </div>
+          <span className="chip chip--green" style={{ fontSize: 11 }}>Active</span>
+        </div>
+        <div className="row" style={{ gap: 8, alignItems: 'center', marginTop: 4 }}>
+          <button type="button" className="btn btn--primary btn--sm" tabIndex={-1} style={{ pointerEvents: 'none' }}>
+            Primary
+          </button>
+          <button type="button" className="btn btn--sm" tabIndex={-1} style={{ pointerEvents: 'none' }}>
+            Outline
+          </button>
+          <span className="chip chip--gold" style={{ fontSize: 11 }}>+10 Jamaat</span>
+        </div>
+      </div>
     </Card>
   );
 }
@@ -220,6 +284,8 @@ export default function Profile() {
 
       <QazaCard />
 
+      <ThemeCard />
+
       <Card title="Ramadan mode" aside={ramadanActive ? 'On now' : 'Off now'}>
         <div className="row" role="group" aria-label="Ramadan mode">
           {[['auto', 'Auto'], ['off', 'Always off'], ['on', 'Always on']].map(([v, l]) => (
@@ -306,17 +372,6 @@ export default function Profile() {
           </div>
         </Card>
       )}
-
-      <Card className="card--tight">
-        <nav aria-label="More" className="list">
-          {[['/badges', 'Badges'], ['/report', 'Weekly report'], ['/nafl', 'Nafl'], ['/history', 'Log and edit'], ['/challenges', 'Challenges']].map(([to, l]) => (
-            <Link key={to} to={to} className="list-row" style={{ textDecoration: 'none' }}>
-              <span className="grow">{l}</span>
-              <Icon name="chevronRight" size={18} />
-            </Link>
-          ))}
-        </nav>
-      </Card>
 
       <AccountCard />
 

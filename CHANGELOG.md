@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-11-14
+
+### Added
+- Dedicated **More** navigation tab (`/more`) with large, accessible rows for Profile & settings, Nafl, Log and edit, Weekly report, Badges, Challenges, and Prayer times (flagged).
+- User name and `@username` heading display at the top of the More screen.
+- 7 muted, solid-colour theme palettes: `forest` (default evergreen), `sage` (herbal green), `coffee` (warm brown), `slate` (cool blue-grey), `plum` (muted purple), `terracotta` (warm rust), and `sand` (light theme with warm off-white background and dark text).
+- Per-device theme persistence via `localStorage` (`zn_theme`).
+- Interactive Theme picker card in Profile with accessible 44px round swatches, `aria-pressed` state, visible focus rings, and live preview.
+- Dynamic `<meta name="theme-color">` synchronization with active palette background, maintaining Ramadan mode override (`#0B1020`) when active.
+- WCAG AA relative luminance and contrast utility (`web/src/utils/contrast.js`) and comprehensive automated test suite (`web/src/utils/themes.test.js`) verifying ≥ 4.5:1 contrast across all palettes.
+
+### Changed
+- Bottom navigation updated to 5 core tabs: Today (`/`), Track (`/streak`), Quran (`/quran`), Friends (`/friends`), and More (`/more`) in normal mode; Ramadan (`/`), 30 days (`/ramadan/map`), Quran, Friends, and More in Ramadan mode.
+- More tab highlights as active whenever viewing any sub-page listed within More (`/profile`, `/nafl`, `/history`, `/report`, `/badges`, `/challenges`, `/times`).
+- Relocated secondary navigation links from Profile into the dedicated More tab.
+
 ## [1.1.0] - 2026-11-13
 
 ### Added

@@ -3,6 +3,7 @@ import { getItem, setItem } from '../utils/storage.js';
 import { ramadanInfo } from '../utils/hijri.js';
 import { toISODate } from '../utils/dates.js';
 import { useNow } from '../hooks/useNow.js';
+import { PALETTES, DEFAULT_THEME } from '../utils/themes.js';
 
 const ModeContext = createContext(null);
 
@@ -36,10 +37,18 @@ export function ModeProvider({ children }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (active) root.dataset.theme = 'ramadan';
-    else delete root.dataset.theme;
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', active ? '#0B1020' : '#0E1B17');
+    if (active) {
+      root.dataset.theme = 'ramadan';
+      if (meta) meta.setAttribute('content', '#0B1020');
+    } else {
+      delete root.dataset.theme;
+      if (meta) {
+        const cur = root.dataset.palette || getItem('zn_theme', DEFAULT_THEME);
+        const bg = PALETTES[cur]?.colors?.bg || PALETTES[DEFAULT_THEME]?.colors?.bg || '#0E1B17';
+        meta.setAttribute('content', bg);
+      }
+    }
   }, [active]);
 
   const setMode = useCallback((m) => {

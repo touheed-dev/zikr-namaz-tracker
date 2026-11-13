@@ -54,7 +54,7 @@ jobs:
           node-version: 22
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.1.0
       - run: supabase start
       - name: Point the app at the local stack
         run: |
