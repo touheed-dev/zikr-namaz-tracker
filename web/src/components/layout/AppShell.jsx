@@ -1,7 +1,11 @@
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext.jsx';
+import { useAuth, useToday } from '../../context/AuthContext.jsx';
 import { useMode } from '../../context/ModeContext.jsx';
+import {
+  shouldShowGlobalAnnouncement,
+  isGlobalAnnouncementDismissed,
+} from '../../utils/announcements.js';
 import { Icon } from '../ui/Icon.jsx';
 import { LoadingBlocks, ErrorState } from '../ui/index.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
@@ -24,16 +28,48 @@ const RAMADAN_TABS = [
 
 export function BottomNav() {
   const { ramadanActive } = useMode();
+  const { user } = useAuth();
+  const today = useToday();
+  const [dismissed, setDismissed] = useState(() => isGlobalAnnouncementDismissed());
+
+  useEffect(() => {
+    const handler = () => setDismissed(isGlobalAnnouncementDismissed());
+    window.addEventListener('zn:announce_dismissed', handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener('zn:announce_dismissed', handler);
+      window.removeEventListener('storage', handler);
+    };
+  }, []);
+
+  const showGlobalDot = shouldShowGlobalAnnouncement({
+    today,
+    optedIn: Boolean(user?.settings?.showOnGlobal),
+    dismissed,
+  });
+
   const tabs = ramadanActive ? RAMADAN_TABS : NORMAL_TABS;
   return (
     <nav className="bottom-nav" aria-label="Main">
       <div className="bottom-nav__inner">
-        {tabs.map((t) => (
-          <NavLink key={t.to} to={t.to} end={t.end} className="bottom-nav__link">
-            <Icon name={t.icon} size={22} />
-            <span>{t.label}</span>
-          </NavLink>
-        ))}
+        {tabs.map((t) => {
+          const showDot = t.to === '/friends' && showGlobalDot;
+          return (
+            <NavLink
+              key={t.to}
+              to={t.to}
+              end={t.end}
+              className="bottom-nav__link"
+              aria-label={showDot ? 'Friends, new feature' : undefined}
+            >
+              <span style={{ position: 'relative', display: 'inline-flex' }}>
+                <Icon name={t.icon} size={22} />
+                {showDot && <span className="bottom-nav__dot" aria-hidden="true" />}
+              </span>
+              <span>{t.label}</span>
+            </NavLink>
+          );
+        })}
       </div>
     </nav>
   );
