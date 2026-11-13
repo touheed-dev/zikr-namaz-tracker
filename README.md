@@ -1,214 +1,285 @@
-# Zikr & Namaz Tracker
+<div align="center">
+  <img src="web/public/icon.svg" width="96" alt="Zikr & Namaz Tracker logo" />
+  <h1>Zikr & Namaz Tracker</h1>
+  <p>A private-by-default habit tracker for Namaz, Zikr, Quran and nafl.</p>
 
-A private-by-default habit tracker for Namaz, Zikr, Quran and nafl, with streak heatmaps, a friends
-leaderboard, challenges, a weekly report and a Ramadan mode.
+  <p>
+    <a href="https://github.com/touheed-dev/zikr-namaz-tracker/actions/workflows/ci.yml">
+      <img src="https://github.com/touheed-dev/zikr-namaz-tracker/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+    </a>
+    <a href="https://zikr-namaz-tracker.vercel.app">
+      <img src="https://img.shields.io/badge/Live-zikr--namaz--tracker.vercel.app-10B981?style=flat&logo=vercel" alt="Live App" />
+    </a>
+    <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react" alt="React 18" />
+    <img src="https://img.shields.io/badge/Vite-5-646CFF?style=flat&logo=vite" alt="Vite 5" />
+    <img src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat&logo=supabase" alt="Supabase" />
+    <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql" alt="PostgreSQL 16" />
+    <img src="https://img.shields.io/badge/Vercel-Deployment-000000?style=flat&logo=vercel" alt="Vercel" />
+  </p>
 
-- **Frontend:** React 18 + Vite + React Router v6, plain CSS. It is a static SPA on Vercel.
-- **Backend:** Supabase only: Postgres, Auth, Row Level Security and SQL functions. There is no custom server.
-  Every rule that matters (points, the 3-day window, edits, privacy, rewards) lives in Postgres, so the
-  browser cannot get around it.
+  <p>
+    <a href="https://zikr-namaz-tracker.vercel.app">Live app</a> ·
+    <a href="#whats-new">What's new</a> ·
+    <a href="#features">Features</a> ·
+    <a href="#run-locally">Run locally</a> ·
+    <a href="docs/ARCHITECTURE.md">Architecture</a>
+  </p>
 
-```
-/web        Vite app (Vercel Root Directory)
-/supabase   config.toml, migrations/*.sql, seed.sql, tests/*.sql
-.github/workflows/ci.yml
-```
+  <p>
+    <img src="docs/screenshots/today.png" width="300" alt="Zikr & Namaz Tracker Today Screen" />
+  </p>
+</div>
 
 ---
 
-## 1. Run it locally
+## What's new
 
-You need Node 22+, Docker (for `supabase start`) and the [Supabase CLI](https://supabase.com/docs/guides/cli).
+### v1.1 — 13 Nov 2026: Global leaderboard
+- Opt-in global leaderboard (off by default)
+- Public usernames (first name + numbers), no emails or real names shown
+- Add a friend with one tap from the Global tab
+- Block / unblock
+- "New" announcement on Today for 7 days
 
+### v1.0 — 11 Nov 2026: First release
+Initial release featuring 5 daily prayers, morning and evening azkar, Quran tracker, streak heatmaps, friend leaderboards, weekly summaries, and Ramadan mode. See [CHANGELOG.md](CHANGELOG.md) for full history.
+
+---
+
+## Why I built this
+
+<!-- edit this section in your own words -->
+
+Staying consistent with daily salah, morning and evening azkar, and regular Quran recitation is a struggle for many of us. Most habit apps either overwhelm you with aggressive notifications or try to turn personal worship into a noisy social network.
+
+I built this tool around the Islamic principle of *istiqamah*—steadfastness and consistency over perfection. It takes a calm, realistic tone: "missed" is simply an honest record to help you pray qaza and reset your intention, not a shame screen or broken streak alert.
+
+Above all, privacy comes first. Your worship is between you and Allah. Your nafl, tahajjud, Ramadan fasts, and detailed reports are strictly confidential. Friends and public boards only ever see the high-level progress you explicitly choose to share.
+
+---
+
+## Features
+
+A focused collection of tools designed to help you build regular habits with quiet accountability.
+
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/today.png" width="240" alt="Namaz tracking" /><br />
+      <strong>Namaz tracking</strong><br />
+      Log five daily prayers with one-tap status for Jamaat, alone, or qaza.
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/streak.png" width="240" alt="Streak heatmaps" /><br />
+      <strong>Streak heatmaps</strong><br />
+      Visualize habit momentum across monthly and annual consistency grids.
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/quran.png" width="240" alt="Quran logger & khatam" /><br />
+      <strong>Quran logger & khatam</strong><br />
+      Track daily recitation with quarter-para accuracy and pace estimates.
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/friends-global.png" width="240" alt="Friends & global leaderboard" /><br />
+      <strong>Friends & global leaderboard</strong><br />
+      Healthy motivation with close friends or an opt-in public community.
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/report.png" width="240" alt="Weekly report" /><br />
+      <strong>Weekly report</strong><br />
+      Private Monday reflection on prayer punctuality and zikr consistency.
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/badges.png" width="240" alt="Badges" /><br />
+      <strong>Badges</strong><br />
+      Meaningful milestones earned through server-verified consistency.
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/ramadan-today.png" width="240" alt="Ramadan mode" /><br />
+      <strong>Ramadan mode</strong><br />
+      Fasting tracker, sehri and iftar countdowns, and a 20-rakat Taraweeh counter.
+    </td>
+    <td align="center" width="33%">
+      <img src="docs/screenshots/profile.png" width="240" alt="Privacy settings" /><br />
+      <strong>Privacy settings</strong><br />
+      Granular switches controlling what friends and global peers can view.
+    </td>
+    <td align="center" width="33%">
+      <!-- Placeholder spacer for balanced 3x3 layout -->
+    </td>
+  </tr>
+</table>
+
+### Also included
+- **Nafl & Tahajjud**: Log Tahajjud, Ishraq, Duha, and Awwabin prayers with guaranteed zero public visibility.
+- **Friendly challenges**: Group challenges based on fixed templates (Jumuah together, weekend consistency).
+- **Daily hadith cards**: 10 authenticated hadith on prayer and dhikr rotating daily without bloat.
+- **Local prayer times**: Automatically fetched using the Aladhan API with jurisprudence settings.
+- **Umm al-Qura Hijri calendar**: Localized calendar calculation with manual ±1 day adjustment.
+- **Data export & account deletion**: One-click JSON data export and complete database account wipe.
+- **Offline support**: Fast service worker caching the application shell for poor connectivity.
+
+---
+
+## Fair by design
+
+The scoring and community systems are built to discourage gaming and protect personal privacy:
+
+- **Strict 3-day logging window**: Prayers must be recorded today or within the past two calendar days to earn points.
+- **Edits earn 0 points**: Modifying an existing record marks it as edited permanently with 0 points to prevent retroactive score inflation.
+- **PostgreSQL rule enforcement**: Scoring, streak math, and eligibility rules live in database triggers and functions (`SECURITY DEFINER`), not in client code.
+- **Private by default**: Nafl prayers, Quran totals, personal heatmaps, and weekly reports are never visible to friends unless explicitly opted in.
+- **No account enumeration**: Friend invitations return identical responses regardless of whether the email is registered.
+- **Safe global leaderboard**: Only displays chosen usernames and point totals for active profiles; email addresses and real names are never exposed.
+
+For complete implementation specifications, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+---
+
+## Tech stack
+
+| Layer | Technology | Details |
+|---|---|---|
+| **Frontend** | React 18, Vite 5, React Router v6 | Plain CSS with custom properties; zero UI component libraries. |
+| **Backend** | Supabase, PostgreSQL 16 | Write logic isolated in `SECURITY DEFINER` RPCs; SELECT-only RLS. |
+| **Auth** | Supabase Auth | Session handling via JWTs; automated profile creation triggers. |
+| **Hosting** | Vercel | Global edge CDN, SPA rewrites, strict security headers. |
+| **CI / CD** | GitHub Actions | Automated linting, test suites, and production build checks. |
+| **Testing** | Node test runner, PL/pgSQL, Playwright | Native Node 22 test runner, database transaction tests, e2e suite. |
+
+---
+
+## Run locally
+
+### Prerequisites
+- Node.js 22 or newer
+- Docker Desktop (for local Supabase services)
+- Git
+
+### Quick start
 ```bash
-# 1. Database + auth (Docker)
-npx supabase start                 # applies migrations + seed.sql (badge defs, demo users)
-npx supabase status                # copy "API URL" and "anon key"
+# 1. Start local Supabase instance
+npx supabase start                 # Applies migrations and seeds demo data
+npx supabase status                # Note the API URL and anon key
 
-# 2. App
+# 2. Configure and run frontend
 cd web
-cp .env.example .env.local     # paste the API URL and anon key from `supabase status`
+cp .env.example .env.local         # Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
 npm install
-npm run dev                    # http://localhost:5173
+npm run dev                        # Opens http://localhost:5173
 ```
 
-Demo users from `seed.sql` (local only): `demo@zikr.local` / `password123` and `zaid@zikr.local` / `password123`.
-
-### Tests
-
-| What | Command | Needs |
-|---|---|---|
-| SQL tests on the Supabase stack | `./supabase/tests/run.sh` | `supabase start` |
-| SQL tests on any throwaway Postgres 15+ | `DB_URL=postgresql://postgres@localhost:5432/postgres ./supabase/tests/run.sh --fresh` | a Postgres server (a temporary database is created and dropped) |
-| Unit tests (dates, points, hijri, hadith integrity) | `cd web && npm test` | Node 20+ |
-| Lint | `cd web && npm run lint` | `npm install` |
-| Build | `cd web && npm run build` | `npm install` |
-| End-to-end | `cd web && npx playwright install chromium && npm run e2e` | `supabase start` + `.env.local` (see below) |
-
-For e2e, also export `E2E_SUPABASE_URL` and `E2E_SUPABASE_ANON_KEY`, using the same values as `.env.local`.
-The e2e suite calls the REST API directly in a few places to prove the server rejects cheating.
+Local demo credentials: `demo@zikr.local` / `password123` and `zaid@zikr.local` / `password123`.
 
 ---
 
-## 2. Deploy (Vercel + Supabase): click by click
+## Deploy your own
 
-You do every step below in your own accounts. **Never paste the `service_role` key anywhere in the app,
-in Vercel, or in a chat.** The browser only ever gets the URL and the anon key.
+Follow these steps to host your own instance on Supabase and Vercel.
 
-### 2.1 Create the Supabase project
-1. https://supabase.com/dashboard → **New project**. Pick a region near your users (for India: Mumbai `ap-south-1`).
-2. Set a strong database password (keep it in your password manager). Wait for the project to finish provisioning.
-3. **Project Settings → General**: copy the **Reference ID** (e.g. `abcd1234efgh`).
+<details>
+<summary><strong>Step 1: Set up Supabase</strong></summary>
 
-### 2.2 Push the schema
-```bash
-npx supabase login                         # opens the browser
-npx supabase link --project-ref <ref>      # asks for the database password
-npx supabase db push --remote              # applies supabase/migrations/*.sql (seed.sql is NOT applied)
+1. Create a project at [supabase.com/dashboard](https://supabase.com/dashboard).
+2. Copy your **Reference ID** from **Project Settings → General**.
+3. Push database migrations from your local repository:
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <your-reference-id>
+   npx supabase db push --remote
+   ```
+4. Configure **Authentication → URL Configuration**:
+   - **Site URL**: `https://your-domain.vercel.app`
+   - **Redirect URLs**: Add `http://localhost:5173/**`, `https://your-domain.vercel.app/**`, and preview URLs.
+5. In **Authentication → Providers → Email**, configure custom SMTP settings (Resend, SendGrid, etc.) for reliable confirmation emails.
+</details>
+
+<details>
+<summary><strong>Step 2: Deploy to Vercel</strong></summary>
+
+1. Import your GitHub repository at [vercel.com/new](https://vercel.com/new).
+2. Set **Root Directory** to `web` and select the **Vite** preset.
+3. Add Environment Variables:
+   - `VITE_SUPABASE_URL`: Your Supabase Project URL
+   - `VITE_SUPABASE_ANON_KEY`: Your Supabase public `anon` key
+4. Click **Deploy**.
+</details>
+
+<details>
+<summary><strong>Step 3: Post-deployment verification</strong></summary>
+
+- [ ] Sign up for a new account on your production URL.
+- [ ] Log a prayer on the Today view and verify point update.
+- [ ] Connect a secondary account as a friend and test mutual leaderboard visibility.
+- [ ] Test password reset email delivery.
+- [ ] Verify JSON data export from the Profile tab.
+</details>
+
+---
+
+## Project structure
+
+```text
+zikr-namaz-tracker/
+├── .github/workflows/ci.yml     # Automated lint, test, and build workflows
+├── docs/                        # Architecture documentation and screenshots
+│   ├── ARCHITECTURE.md          # Technical specifications and verification log
+│   └── screenshots/             # Interface preview assets
+├── supabase/                    # Database backend
+│   ├── migrations/              # Incremental SQL schema migrations
+│   ├── tests/                   # PostgreSQL PL/pgSQL verification suites
+│   ├── config.toml              # Local Supabase emulator configuration
+│   └── seed.sql                 # Development users and badge definitions
+└── web/                         # React 18 frontend
+    ├── src/
+    │   ├── api/                 # Strongly-typed Supabase RPC abstractions
+    │   ├── components/          # Reusable UI primitives and layout views
+    │   ├── context/             # Authentication and display mode providers
+    │   ├── pages/               # Primary application route components
+    │   └── utils/               # Dates, prayer calculations, and hadith data
+    ├── vercel.json              # Routing rules, CSP, and caching policies
+    └── package.json
 ```
-Check it in **Table Editor**. You should see the tables with a lock icon (RLS on), and 11 rows in `badge_defs`.
-
-### 2.3 Auth URL configuration
-**Authentication → URL Configuration**:
-- **Site URL**: your Vercel production URL, e.g. `https://zikr-namaz.vercel.app`
-- **Redirect URLs**: add all three:
-  - `http://localhost:5173/**`
-  - `https://zikr-namaz.vercel.app/**` (your production URL)
-  - `https://*-<your-vercel-team-or-username>.vercel.app/**` (preview deployments)
-
-### 2.4 Email confirmation and SMTP
-**Authentication → Sign In / Providers → Email**:
-- **Confirm email**: decide on or off.
-  - *On* (recommended for production): after sign up the app shows "Check your email" and the user signs in from the link.
-  - *Off*: users are signed in right after sign up.
-- Supabase's built-in mail sender is **rate-limited** (a few emails per hour) and meant for testing only.
-  For production, set **Authentication → Emails → SMTP Settings** with your own provider
-  (Resend, Postmark, SES, Brevo, etc.). Password reset and confirmation depend on it.
-
-### 2.5 Vercel
-1. Push this repo to GitHub.
-2. https://vercel.com/new → **Import** the repo.
-3. **Root Directory**: `web`. **Framework preset**: Vite. **Build command**: `npm run build`. **Output directory**: `dist`.
-4. **Environment Variables** (Production + Preview):
-   - `VITE_SUPABASE_URL` = Project Settings → API → Project URL
-   - `VITE_SUPABASE_ANON_KEY` = Project Settings → API → `anon` `public` key
-5. **Deploy**. Then copy the production URL back into step 2.3 if it changed.
-
-`web/vercel.json` already handles the SPA rewrites (every route → `index.html`), security headers
-(CSP, HSTS, nosniff, frame-deny) and `sw.js` with `no-cache`, so new builds roll out.
-**If you use a custom Supabase domain**, add it to `connect-src` in the CSP in `web/vercel.json`.
-
-### 2.6 Post-deploy checklist
-- [ ] Sign up with a real email on the production URL (and confirm it, if confirmation is on).
-- [ ] Mark a prayer on Today. Reload. It is still marked and the points chip changed.
-- [ ] Open the app on a second device or browser, sign up a second account, and add the first account as a friend. Accept it on the first account. Both see each other on the leaderboard.
-- [ ] On the second account, open the first account from the leaderboard. The heatmap says "private" until you switch it on in Profile.
-- [ ] Sign out → **Forgot password?** → the email arrives → the link opens `/reset-password` → set a new password → sign in with it.
-- [ ] Profile → Export my data downloads a JSON file.
-- [ ] Profile → Ramadan mode "Always on" switches the theme. Switch it back to Auto.
 
 ---
 
-## 3. How the rules are enforced
+## Tests
 
-All writes go through `SECURITY DEFINER` functions (`set search_path = public`) that use `auth.uid()`
-and validate every argument. `INSERT/UPDATE/DELETE` is revoked on every table for `anon` and
-`authenticated`, and RLS has **only SELECT policies**. So even if a grant slipped back in, RLS would still refuse direct writes.
+Every commit triggers automated validation across frontend and backend layers:
 
-| Rule | Where |
-|---|---|
-| "Today" = `(now() at time zone profiles.timezone)::date`, from the server clock and never the client | `app_private.user_today` |
-| Future dates rejected | `app_private.check_log_date` |
-| Points only for today and the previous 2 days | `set_prayer`: `eligible = p_date >= today - 2` |
-| Any change to an existing entry is an edit: `edited = true`, 0 points forever | `set_prayer`, `set_zikr` |
-| Clearing is an edit too (`status = null`). Rows are never deleted | `set_prayer` |
-| Only non-edit transition: `missed → qaza` / `none → qaza` (+2 once, `qaza_at`) | `set_prayer` |
-| Same status sent twice (a double click) is a no-op, not an edit | `set_prayer` |
-| Day bonuses (+3 both azkar, +5 full day) only from eligible, non-edited rows | `app_private.points_between` |
-| Friend-challenge rewards: templates only, reward set by the server, granted once, counted only from eligible, non-edited logs, and at most one open challenge per template | `create_challenge`, `check_challenges` |
-| Friends see only name, points and streak. Heatmap and Quran streak only if the owner opts in. Nafl, Ramadan items and the report never | `get_leaderboard`, `friend_heatmap`, `friend_quran_streak` |
-| No account enumeration: identical response for known and unknown emails | `send_friend_request` |
-| Global leaderboard is strictly opt-in: requires choosing a unique username (`^[a-z][a-z0-9_]{2,19}$`) and setting `showOnGlobal = true`. Inactive users (>7 days without a prayer log in local timezone) are omitted | `set_username`, `update_settings`, `get_global_leaderboard`, `app_private.is_user_active` |
-| Global leaderboard privacy: returns only username, points, streak, and viewer relationship. Never real names, emails, heatmaps, quran, nafl, or report data | `get_global_leaderboard` |
-| Add friend by tap: requests sent by user ID use `friend_requests.via = 'global'`. Target email is looked up server-side and never exposed. Incoming global requests show @username with email null | `send_friend_request_to_user`, `list_friend_requests` |
-| Blocking: mutual request deletion, blocker/blocked pair in `friend_blocks` (SELECT-only RLS), requests from blocked users return generic ok invisibly | `block_user`, `unblock_user`, `list_blocked`, `friend_blocks` |
-
-Helpers that take a user id (`points_between`, `user_today`, …) live in the `app_private` schema. PostgREST
-does not expose that schema, and clients have no `EXECUTE` on it, so nobody can call
-`points_between(<someone else>)`.
-
-### Schema refinements (vs the minimum in the brief), and why
-- **`friend_requests(requester, email)`** holds pending requests, keyed by **email**. A request to an address
-  with no account is stored exactly like one to a real account, so the "Sent" list cannot be used to probe
-  which emails exist. `friendships` only holds **accepted** pairs (unique per unordered pair, no self-pairs).
-  When the invitee signs up later with that email, they see the request.
-- **`challenges.template`** and **`challenges.weekdays`** were added. Friend challenges come only from the four templates, and the server
-  sets kind, target and reward, so a client cannot create a "+1000 points for 1 day" challenge.
-  `weekdays` makes "Jumuah together" count Fridays and "No-miss weekend" count Saturday and Sunday.
-- **`challenge_rewards(challenge_id, user_id, points, granted_on)`** records the one-time reward per member,
-  so rewards count in the leaderboard period in which they were granted.
-- **`badge_defs.target` / `sort`**: progress notes ("12 / 40 days") are computed server-side from logs.
-  Badge definitions live in a **migration** (production needs them). `seed.sql` repeats them idempotently.
-- **`app_private.now()`** wraps `now()`. Production uses the real clock. The SQL tests replace it inside a
-  rolled-back transaction to simulate midnight, year boundaries and multi-day challenges.
-- **Global leaderboard migration (`20261113000001_global_leaderboard.sql`)**:
-  - **`profiles.username`**: nullable unique case-insensitively via `lower(username)` index, regex `^[a-z][a-z0-9_]{2,19}$`. Reserved names (`admin`, `support`, `zikr`, `namaz`, `moderator`, `system`) rejected.
-  - **`showOnGlobal` opt-in setting**: defaults to `false`. Trying to set `showOnGlobal = true` without a username raises `'Choose a username first'`.
-  - **Active status rule**: user must have logged at least one prayer in the last 7 days of their local timezone (`app_private.is_user_active`).
-  - **`friend_requests.via`**: `'email'` or `'global'` enum check. Tap-to-add on the global leaderboard resolves the target email server-side and stores `via = 'global'`, hiding emails and real names from incoming request lists.
-  - **`friend_blocks`**: blocker/blocked table with RLS (`blocker = auth.uid()` SELECT only, direct writes revoked). Blocking deletes pending friend requests in both directions. Outgoing requests to someone who blocked you return a generic success message invisibly without creating a row.
-  - **`get_global_leaderboard(p_period)`**: returns top 50 opted-in active users, plus `me` object with rank and points (in viewer's timezone). Never exposes email, real name, nafl, quran, heatmap, or reports.
-
----
-
-## 4. Frontend notes
-- Dates are local `YYYY-MM-DD` strings built from date parts (`src/utils/dates.js`). There is no `toISOString()` for dates.
-  "Today" uses the profile timezone, the same rule as the server.
-- `src/api/*` keeps the contract in the brief (§6.3). Every function returns plain data or throws `Error(message)`.
-  Auth errors (401 / expired JWT) clear the state and redirect to `/login`, and the user comes back to the page they wanted.
-- Optimistic updates (prayers, zikr, nafl, Quran, settings, friend requests) roll back on failure and show a toast.
-  A second tap on the same item is ignored while its request is in flight.
-- Prayer times come from Aladhan in the browser, cached per day in `localStorage`. The Hijri date comes from `Intl` (Umm al-Qura)
-  with a −1/0/+1 offset. Ramadan mode is stored in `zn_mode` and the offset in `zn_hijri_offset`.
-- Hadith: `src/assets/hadith.js` holds **exactly** the 10 entries from the brief. A unit test checks a SHA-256 fingerprint
-  of every Arabic and English text plus each source, so any edit fails CI. **Re-check all 10 against sunnah.com
-  before public release.** Selection is deterministic per day, one card per screen at most, dismissible for the day,
-  and the Profile toggle "Show hadith cards" hides them all.
-- Service worker (`public/sw.js`): Supabase and other cross-origin requests are network-only, navigations are network-first with an
-  offline page, and hashed assets are cache-first. Each build stamps a new version, so the new worker activates and open tabs reload once.
-- Reminders (Azan alert, Jamaat nudge, Azkar reminder) are **in-app** banners on Today while the app is open.
-  There are no push notifications in v1.
-
----
-
-## 5. Assumptions
-- The week runs Monday to Sunday in the **viewer's** timezone. "This month" is the calendar month. "All time" never resets.
-  (The PDF's "Points reset weekly" line is shown as weekly *views* of the same points.)
-- Qaza made up earns +2 only inside the 3-day window, like every other point. Made up later, it is recorded with 0 points.
-- The full-day +5 counts jamaat, alone and qaza (+2) rows, as long as all 5 are eligible and not edited.
-- Friend challenges: a day counts when **every member who joined** did it (marked within the window, not edited).
-  Personal challenges count your full record. Both count days since creation, not necessarily consecutive.
-- Head-to-head compares **points** (the only shared metric). It says how many Jamaat prayers (+10) close the gap.
-- Jamaat % on Streak = Jamaat ÷ prayers you marked in the last 30 days.
-- The PDF's "Streak freeze", "Group goal" and "prayed Isha after 10 pm" insight are left out: the spec doesn't define them
-  and we don't store prayer times of day.
-- Bottom nav uses the spec's 5 tabs. In Ramadan mode it is Ramadan / 30 days / Quran / Friends / Profile.
-- Taraweeh blocks are 2 rows of 5 on phones (one row of 10 on wider screens) so every block is a 44px target.
-- Text on the accent green is white (5.0:1) instead of cream (4.4:1), to meet the 4.5:1 contrast rule.
-- Changing your timezone in settings is allowed. It can shift "today" by at most a day, which still respects the window.
-- No hadith were added. No suggestions.
-
----
-
-## 6. Verified / not verified (at handover)
-
-| Item | Status | How |
+| Test Layer | Command | Requirements |
 |---|---|---|
-| Migrations apply cleanly | Verified | Postgres 16, fresh DB, via `run.sh --fresh` |
-| SQL tests (196 assertions: anti-cheat, timezone near midnight, year boundary, privacy A/B/stranger, enumeration, settings whitelist, challenges and rewards, badges, report, export, delete cascade, auth trigger) | Verified | `run.sh --fresh` on Postgres 16 |
-| Unit tests (15, including hadith fingerprints, DST, 3 timezones) | Verified | `node --test` under 4 different `TZ` values |
-| All 12 screens + Ramadan Today render with no console errors | Verified | esbuild bundle in headless Chromium against the real DB functions, with stand-ins for supabase-js and react-router only |
-| The repo's e2e suite (11 steps) | Verified (stand-in client) | The same `e2e/app.spec.js` run against that harness |
-| `npm run lint`, `npm run build` (Vite), e2e against real `supabase start` + supabase-js | **Not verified** | npm packages could not be installed in the build environment. CI runs all of them |
-| Supabase-hosted specifics (auth trigger as `supabase_auth_admin`, email flows, SMTP) | **Not verified** | Needs your project. Simulated the auth role locally. Use the post-deploy checklist |
-| Aladhan live responses | **Not verified** | Network blocked here. Parsing tested with a fixture |
+| **JavaScript Unit Tests** | `cd web && npm test` | Node 22+ (checks date maths, DST transitions, hadith checksums) |
+| **Code Style & Linting** | `cd web && npm run lint` | ESLint (enforces `--max-warnings 0`) |
+| **Production Build** | `cd web && npm run build` | Vite asset bundling |
+| **SQL Integration Tests** | `./supabase/tests/run.sh` | Running local Supabase instance or PostgreSQL 15+ |
+| **End-to-End Suite** | `cd web && npm run e2e` | Playwright test runner against local or remote Supabase |
+
+---
+
+## Roadmap
+
+Ideas under consideration for upcoming iterations (explorations, not binding commitments):
+
+- **Web Push Notifications**: Privacy-preserving Azan alerts and morning zikr nudges via Web Push API.
+- **PWA Installation Experience**: Polished install prompts and deeper offline caching for remote areas.
+- **Internationalization**: Full interface translations for Arabic and Urdu.
+- **Hijri Ramadan Automation**: Automatic detection of upcoming fasting seasons without manual offset updates.
+
+---
+
+## Acknowledgements
+
+- Prayer calculations powered by the [Aladhan API](https://aladhan.com/prayer-times-api).
+- Hijri calendar dates derived from JavaScript `Intl.DateTimeFormat` (Umm al-Qura calendar).
+- Hadith narrations sourced from Sahih al-Bukhari and Sahih Muslim (verified via [sunnah.com](https://sunnah.com)).
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
