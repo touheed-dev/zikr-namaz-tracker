@@ -200,10 +200,14 @@ declare
 begin
   for i in 1..55 loop
     v_new_id := gen_random_uuid();
-    insert into auth.users (id, email) values (v_new_id, 'bot' || i || '@test.dev');
-    insert into public.profiles (id, name, username, settings)
-    values (v_new_id, 'Bot ' || i, 'bot_user_' || i,
-            jsonb_build_object('showOnGlobal', true, 'shareStats', true));
+    insert into auth.users (id, email, raw_user_meta_data)
+    values (v_new_id, 'bot' || i || '@test.dev', jsonb_build_object('name', 'Bot ' || i, 'timezone', 'Asia/Kolkata'));
+
+    update public.profiles
+       set username = 'bot_user_' || i,
+           settings = settings || '{"showOnGlobal": true}'::jsonb
+     where id = v_new_id;
+
     insert into public.prayer_logs (user_id, log_date, prayer, status, eligible, points)
     values (v_new_id, '2026-11-13', 'fajr', 'alone', true, 4);
   end loop;
