@@ -142,47 +142,123 @@ export default function Friends() {
           </button>
         )}
       />
-      <Tabs label="Leaderboard scope" items={SCOPE_TABS} value={scope} onChange={setScope} />
-      <Tabs label="Leaderboard period" items={PERIODS} value={period} onChange={setPeriod} />
+      <div className="layout-2col">
+        <div className="layout-2col__left">
+          <Tabs label="Leaderboard scope" items={SCOPE_TABS} value={scope} onChange={setScope} />
+          <Tabs label="Leaderboard period" items={PERIODS} value={period} onChange={setPeriod} />
 
-      {scope === 'friends' && (
-        <>
-          {board.loading && <LoadingBlocks heights={[110, 300]} />}
-          {!board.loading && board.error && <ErrorState error={board.error} onRetry={board.reload} />}
-          {!board.loading && !board.error && (
+          {scope === 'friends' && (
             <>
-              <HeadToHead rows={rows} />
-              <Card>
-                {rows.length <= 1 && (
-                  <EmptyState icon="users" title="Just you for now">
-                    Add a friend by email to compare points and streaks. They only see your name, points and streak.
-                  </EmptyState>
-                )}
-                <ol className="list" aria-label="Leaderboard" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                  {rows.map((r, i) => (
-                    <li key={r.id}>
-                      <button
-                        type="button"
-                        className={`list-row list-row--btn ${r.isMe ? 'list-row--me' : ''}`}
-                        onClick={() => !r.isMe && setOpen(r)}
-                        disabled={r.isMe}
-                        aria-label={`${i + 1}. ${r.isMe ? 'You' : r.name}, ${r.points} points, ${r.streak} day streak`}
-                      >
-                        <span className="rank">{i + 1}</span>
-                        <Avatar name={r.name} />
-                        <span className="grow">
-                          <span className="strong">{r.isMe ? 'You' : r.name}</span><br />
-                          <span className="small muted">{r.streak} day streak</span>
-                        </span>
-                        <span className="strong" style={{ color: 'var(--light)' }}>{formatPoints(r.points)}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              </Card>
+              {board.loading && <LoadingBlocks heights={[110, 300]} />}
+              {!board.loading && board.error && <ErrorState error={board.error} onRetry={board.reload} />}
+              {!board.loading && !board.error && (
+                <>
+                  <HeadToHead rows={rows} />
+                  <Card>
+                    {rows.length <= 1 && (
+                      <EmptyState icon="users" title="Just you for now">
+                        Add a friend by email to compare points and streaks. They only see your name, points and streak.
+                      </EmptyState>
+                    )}
+                    <ol className="list" aria-label="Leaderboard" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                      {rows.map((r, i) => (
+                        <li key={r.id}>
+                          <button
+                            type="button"
+                            className={`list-row list-row--btn ${r.isMe ? 'list-row--me' : ''}`}
+                            onClick={() => !r.isMe && setOpen(r)}
+                            disabled={r.isMe}
+                            aria-label={`${i + 1}. ${r.isMe ? 'You' : r.name}, ${r.points} points, ${r.streak} day streak`}
+                          >
+                            <span className="rank">{i + 1}</span>
+                            <Avatar name={r.name} />
+                            <span className="grow">
+                              <span className="strong">{r.isMe ? 'You' : r.name}</span><br />
+                              <span className="small muted">{r.streak} day streak</span>
+                            </span>
+                            <span className="strong" style={{ color: 'var(--light)' }}>{formatPoints(r.points)}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                  </Card>
+                </>
+              )}
             </>
           )}
 
+          {scope === 'global' && (
+            <>
+              {!isOptedIn && (
+                <Card className="card--deep">
+                  <div className="strong">Show yourself on the global leaderboard</div>
+                  <p className="small muted">
+                    Show yourself on the global leaderboard. Others see only your username, points and streak.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn--primary btn--sm"
+                    onClick={() => setUsernameDialogOpen(true)}
+                  >
+                    Join global leaderboard
+                  </button>
+                </Card>
+              )}
+
+              {globalBoard.loading && <LoadingBlocks heights={[110, 300]} />}
+              {!globalBoard.loading && globalBoard.error && (
+                <ErrorState error={globalBoard.error} onRetry={globalBoard.reload} />
+              )}
+              {!globalBoard.loading && !globalBoard.error && (
+                <Card>
+                  {globalRows.length === 0 ? (
+                    <EmptyState icon="users" title="No one has joined yet">
+                      Opt-in active users who log prayers will appear on this leaderboard.
+                    </EmptyState>
+                  ) : (
+                    <ol className="list" aria-label="Global leaderboard" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                      {globalRows.map((r, i) => (
+                        <li key={r.id}>
+                          <div className={`list-row ${r.isMe ? 'list-row--me' : ''}`} style={{ alignItems: 'center' }}>
+                            <span className="rank">{i + 1}</span>
+                            <Avatar name={r.username} />
+                            <span className="grow">
+                              <span className="strong">@{r.username}{r.isMe ? ' (You)' : ''}</span><br />
+                              <span className="small muted">{r.streak} day streak</span>
+                            </span>
+                            <span className="strong" style={{ color: 'var(--light)', marginRight: 12 }}>
+                              {formatPoints(r.points)}
+                            </span>
+                            {!r.isMe && (
+                              r.isFriend ? (
+                                <span className="chip chip--light">Friends</span>
+                              ) : r.requested ? (
+                                <button type="button" className="btn btn--sm btn--ghost" disabled>
+                                  Requested
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="btn btn--sm btn--primary"
+                                  disabled={Boolean(busy)}
+                                  onClick={() => inviteUser(r.id)}
+                                >
+                                  Add friend
+                                </button>
+                              )
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </Card>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="layout-2col__right">
           {requests.error && <ErrorState error={requests.error} onRetry={requests.reload} title="Could not load requests" />}
           {inc.length > 0 && (
             <Card title="Requests">
@@ -245,113 +321,18 @@ export default function Friends() {
               </div>
             )}
           </Card>
-        </>
-      )}
 
-      {scope === 'global' && (
-        <>
-          {!isOptedIn && (
-            <Card className="card--deep">
-              <div className="strong">Show yourself on the global leaderboard</div>
-              <p className="small muted">
-                Show yourself on the global leaderboard. Others see only your username, points and streak.
-              </p>
-              <button
-                type="button"
-                className="btn btn--primary btn--sm"
-                onClick={() => setUsernameDialogOpen(true)}
-              >
-                Join global leaderboard
-              </button>
-            </Card>
-          )}
+          <Link to="/challenges" className="btn btn--block">Challenges with friends</Link>
 
-          {globalBoard.loading && <LoadingBlocks heights={[110, 300]} />}
-          {!globalBoard.loading && globalBoard.error && (
-            <ErrorState error={globalBoard.error} onRetry={globalBoard.reload} />
-          )}
-          {!globalBoard.loading && !globalBoard.error && (
-            <Card>
-              {globalRows.length === 0 ? (
-                <EmptyState icon="users" title="No one has joined yet">
-                  Opt-in active users who log prayers will appear on this leaderboard.
-                </EmptyState>
-              ) : (
-                <ol className="list" aria-label="Global leaderboard" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-                  {globalRows.map((r, i) => (
-                    <li key={r.id}>
-                      <div className={`list-row ${r.isMe ? 'list-row--me' : ''}`} style={{ alignItems: 'center' }}>
-                        <span className="rank">{i + 1}</span>
-                        <Avatar name={r.username} />
-                        <span className="grow">
-                          <span className="strong">@{r.username}{r.isMe ? ' (You)' : ''}</span><br />
-                          <span className="small muted">{r.streak} day streak</span>
-                        </span>
-                        <span className="strong" style={{ color: 'var(--light)', marginRight: 12 }}>
-                          {formatPoints(r.points)}
-                        </span>
-                        {!r.isMe && (
-                          r.isFriend ? (
-                            <span className="chip chip--light">Friends</span>
-                          ) : r.requested ? (
-                            <button type="button" className="btn btn--sm btn--ghost" disabled>
-                              Requested
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              className="btn btn--sm btn--primary"
-                              disabled={Boolean(busy)}
-                              onClick={() => inviteUser(r.id)}
-                            >
-                              Add friend
-                            </button>
-                          )
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </Card>
-          )}
-
-          {requests.error && <ErrorState error={requests.error} onRetry={requests.reload} title="Could not load requests" />}
-          {inc.length > 0 && (
-            <Card title="Requests">
-              {inc.map((r) => (
-                <div key={r.id} className="list-row">
-                  <Avatar name={r.name} />
-                  <span className="grow">
-                    <span className="strong">{r.via === 'global' ? `@${r.name}` : r.name}</span>
-                    <br />
-                    {r.email && <span className="small muted">{r.email}</span>}
-                  </span>
-                  <button type="button" className="btn btn--primary btn--sm" disabled={Boolean(busy)} onClick={() => accept(r.id).catch(() => {})}>Accept</button>
-                  <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} aria-label={`Decline ${r.name}`} onClick={() => remove(r.id, 'Request declined').catch(() => {})}>
-                    <Icon name="close" size={18} />
-                  </button>
-                  {r.via === 'global' && (
-                    <button type="button" className="btn btn--ghost btn--sm" disabled={Boolean(busy)} aria-label={`Block ${r.name}`} onClick={() => block(r.id, `${r.name} blocked`).catch(() => {})}>
-                      Block
-                    </button>
-                  )}
-                </div>
-              ))}
-            </Card>
-          )}
-        </>
-      )}
-
-      <Link to="/challenges" className="btn btn--block">Challenges with friends</Link>
-
-      <Card className="card--tight">
-        <div className="eyebrow">How points work</div>
-        <p className="small">
-          Jamaat +10 · Alone +4 · Both azkar +3 · Full-day bonus +5 · Qaza made up +2. Points count only if you mark
-          within 3 days, and edited entries earn 0. Quran and nafl never add points. Friends see only your name, points and streak.
-        </p>
-      </Card>
+          <Card className="card--tight">
+            <div className="eyebrow">How points work</div>
+            <p className="small">
+              Jamaat +10 · Alone +4 · Both azkar +3 · Full-day bonus +5 · Qaza made up +2. Points count only if you mark
+              within 3 days, and edited entries earn 0. Quran and nafl never add points. Friends see only your name, points and streak.
+            </p>
+          </Card>
+        </div>
+      </div>
 
       {open && (
         <FriendSheet

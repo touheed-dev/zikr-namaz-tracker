@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-11-14
+
+### Added
+- Responsive desktop layout for screens ≥ 1100px with a fixed 240px left sidebar and wide content canvas (max-width 1120px).
+- Fixed left sidebar component (`Sidebar.jsx`) displaying app branding, full navigation items (with Ramadan mode synchronization), active state indicators, Friends "new" dot, and user profile shortcut.
+- Two-column responsive layout grid (`.layout-2col`) for Today (Namaz on left; Zikr, Quran today, Nafl, and Hadith on right), Ramadan mode, Track (/streak), and Friends.
+- Masonry-like 2-column settings grid (`.profile-grid`) on Profile using CSS columns with `break-inside: avoid`.
+- Expanded 3-4 column layout for Badges (`.badges-grid`) and 2-column layout for Weekly report (`.report-2col`).
+- Focused max-width 760px single-column layout (`.page--narrow`) on desktop for More, Quran, Nafl, History, Badges, and Challenges.
+- Desktop toast repositioning to the bottom-center of the main content area without mobile bottom-nav offsets.
+
+### Changed
+- Tablet breakpoint (768px–1099px): `.page` and `.bottom-nav__inner` widen to max-width 720px while retaining mobile bottom navigation.
+- Pure CSS media query switching between mobile bottom navigation and desktop sidebar without JavaScript width detection or layout shift.
+- Mobile viewport (< 768px) remains strictly unchanged in element ordering, touch targets, and visual presentation.
+
 ## [1.2.0] - 2026-11-14
 
 ### Added

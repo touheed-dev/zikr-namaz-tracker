@@ -9,8 +9,9 @@ import {
 import { Icon } from '../ui/Icon.jsx';
 import { LoadingBlocks, ErrorState } from '../ui/index.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
+import { Sidebar } from './Sidebar.jsx';
 
-const NORMAL_TABS = [
+export const NORMAL_TABS = [
   { to: '/', label: 'Today', icon: 'today', end: true },
   { to: '/streak', label: 'Track', icon: 'grid' },
   { to: '/quran', label: 'Quran', icon: 'book' },
@@ -18,7 +19,7 @@ const NORMAL_TABS = [
   { to: '/more', label: 'More', icon: 'more' },
 ];
 
-const RAMADAN_TABS = [
+export const RAMADAN_TABS = [
   { to: '/', label: 'Ramadan', icon: 'moon', end: true },
   { to: '/ramadan/map', label: '30 days', icon: 'calendar' },
   { to: '/quran', label: 'Quran', icon: 'book' },
@@ -26,7 +27,7 @@ const RAMADAN_TABS = [
   { to: '/more', label: 'More', icon: 'more' },
 ];
 
-const MORE_ROUTES = [
+export const MORE_ROUTES = [
   '/more',
   '/profile',
   '/nafl',
@@ -35,6 +36,18 @@ const MORE_ROUTES = [
   '/badges',
   '/challenges',
   '/times',
+];
+
+export const NARROW_ROUTES = [
+  '/more',
+  '/quran',
+  '/nafl',
+  '/history',
+  '/report',
+  '/badges',
+  '/challenges',
+  '/times',
+  '/ramadan/map',
 ];
 
 export function BottomNav() {
@@ -104,6 +117,10 @@ export function ProtectedLayout() {
   const { status, loadError, reload } = useAuth();
   const location = useLocation();
 
+  const isNarrowRoute = NARROW_ROUTES.some(
+    (p) => location.pathname === p || location.pathname.startsWith(`${p}/`),
+  );
+
   if (status === 'loading') {
     return (
       <main className="page" id="main"><LoadingBlocks heights={[70, 84, 300, 90]} /></main>
@@ -120,7 +137,8 @@ export function ProtectedLayout() {
   return (
     <div className="app">
       <a href="#main" className="skip-link">Skip to content</a>
-      <main className="page" id="main" tabIndex={-1}>
+      <Sidebar />
+      <main className={`page ${isNarrowRoute ? 'page--narrow' : ''}`} id="main" tabIndex={-1}>
         <ErrorBoundary resetKey={location.pathname}>
           <Suspense fallback={<LoadingBlocks heights={[60, 120, 260]} />}>
             <Outlet />

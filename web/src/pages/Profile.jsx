@@ -282,98 +282,100 @@ export default function Profile() {
     <>
       <PageHead title="Profile" sub={`${user.name} · ${user.email}`} />
 
-      <QazaCard />
+      <div className="profile-grid">
+        <QazaCard />
 
-      <ThemeCard />
+        <ThemeCard />
 
-      <Card title="Ramadan mode" aside={ramadanActive ? 'On now' : 'Off now'}>
-        <div className="row" role="group" aria-label="Ramadan mode">
-          {[['auto', 'Auto'], ['off', 'Always off'], ['on', 'Always on']].map(([v, l]) => (
-            <button key={v} type="button" className="chip chip--btn" aria-pressed={mode === v} onClick={() => setMode(v)}>{l}</button>
-          ))}
-        </div>
-        <div className="small muted">Auto follows the Hijri month of Ramadan.</div>
-        <div>
-          <div className="field__label" id="hijri-label">Hijri date adjustment (local moon sighting)</div>
-          <div className="row" role="group" aria-labelledby="hijri-label">
-            {[-1, 0, 1].map((n) => (
-              <button key={n} type="button" className="chip chip--btn" aria-pressed={hijriOffset === n} onClick={() => setHijriOffset(n)}>
-                {n > 0 ? `+${n}` : n === 0 ? '0' : `−${Math.abs(n)}`} day
-              </button>
+        <Card title="Ramadan mode" aside={ramadanActive ? 'On now' : 'Off now'}>
+          <div className="row" role="group" aria-label="Ramadan mode">
+            {[['auto', 'Auto'], ['off', 'Always off'], ['on', 'Always on']].map(([v, l]) => (
+              <button key={v} type="button" className="chip chip--btn" aria-pressed={mode === v} onClick={() => setMode(v)}>{l}</button>
             ))}
           </div>
-          <div className="small muted mt-8">Today: {formatHijri(today, hijriOffset)}</div>
-        </div>
-      </Card>
-
-      <LocationCard />
-
-      <Card title="Reminders">
-        <div className="small muted">Shown inside the app while it is open.</div>
-        <div>
-          {sw('azanAlert', 'Azan alert', 'At each prayer time, by your location')}
-          {sw('jamaatNudge', 'Jamaat nudge', '15 minutes before the next prayer')}
-          {sw('azkarReminder', 'Azkar reminder', 'After Fajr and after Asr')}
-          {sw('smartFix', 'Smart fix suggestions', 'In the weekly report after 3 missed Fajr')}
-        </div>
-      </Card>
-
-      <Card title="Privacy">
-        <div>
-          <div className="list-row" style={{ paddingLeft: 0, paddingRight: 0 }}>
-            <span className="grow">
-              <span className="strong">Public username</span>
-              <br />
-              <span className="small muted">
-                {user.username ? `@${user.username}` : 'Not set'}
-              </span>
-            </span>
-            <button
-              type="button"
-              className="btn btn--sm btn--ghost"
-              onClick={() => setUsernameDialogOpen(true)}
-            >
-              {user.username ? 'Edit' : 'Set username'}
-            </button>
-          </div>
-
-          <Switch
-            label="Show me on the global leaderboard"
-            hint="Others see only your username, points and streak"
-            checked={Boolean(s.showOnGlobal)}
-            disabled={busy.has('showOnGlobal')}
-            onChange={handleGlobalSwitch}
-          />
-
-          {sw('shareStats', 'Friends see my points and streak', 'Needed for the leaderboard')}
-          {sw('shareHeatmap', 'Friends see my Namaz heatmap', 'Off by default, so ibadat stays between you and Allah')}
-          {sw('shareQuran', 'Friends see my Quran streak', 'Off by default. Nafl is always private.')}
-          {sw('weeklyReport', 'Weekly report', 'Only for you, never for friends')}
-          {sw('showHadith', 'Show hadith cards', 'One short hadith on some screens')}
-        </div>
-      </Card>
-
-      {blockedList.length > 0 && (
-        <Card title="Blocked users">
-          <div className="stack stack--sm">
-            {blockedList.map((bu) => (
-              <div key={bu.id} className="list-row">
-                <span className="grow strong">@{bu.username}</span>
-                <button
-                  type="button"
-                  className="btn btn--sm btn--ghost"
-                  disabled={unblocking === bu.id}
-                  onClick={() => handleUnblock(bu)}
-                >
-                  {unblocking === bu.id ? 'Unblocking…' : 'Unblock'}
+          <div className="small muted">Auto follows the Hijri month of Ramadan.</div>
+          <div>
+            <div className="field__label" id="hijri-label">Hijri date adjustment (local moon sighting)</div>
+            <div className="row" role="group" aria-labelledby="hijri-label">
+              {[-1, 0, 1].map((n) => (
+                <button key={n} type="button" className="chip chip--btn" aria-pressed={hijriOffset === n} onClick={() => setHijriOffset(n)}>
+                  {n > 0 ? `+${n}` : n === 0 ? '0' : `−${Math.abs(n)}`} day
                 </button>
-              </div>
-            ))}
+              ))}
+            </div>
+            <div className="small muted mt-8">Today: {formatHijri(today, hijriOffset)}</div>
           </div>
         </Card>
-      )}
 
-      <AccountCard />
+        <LocationCard />
+
+        <Card title="Reminders">
+          <div className="small muted">Shown inside the app while it is open.</div>
+          <div>
+            {sw('azanAlert', 'Azan alert', 'At each prayer time, by your location')}
+            {sw('jamaatNudge', 'Jamaat nudge', '15 minutes before the next prayer')}
+            {sw('azkarReminder', 'Azkar reminder', 'After Fajr and after Asr')}
+            {sw('smartFix', 'Smart fix suggestions', 'In the weekly report after 3 missed Fajr')}
+          </div>
+        </Card>
+
+        <Card title="Privacy">
+          <div>
+            <div className="list-row" style={{ paddingLeft: 0, paddingRight: 0 }}>
+              <span className="grow">
+                <span className="strong">Public username</span>
+                <br />
+                <span className="small muted">
+                  {user.username ? `@${user.username}` : 'Not set'}
+                </span>
+              </span>
+              <button
+                type="button"
+                className="btn btn--sm btn--ghost"
+                onClick={() => setUsernameDialogOpen(true)}
+              >
+                {user.username ? 'Edit' : 'Set username'}
+              </button>
+            </div>
+
+            <Switch
+              label="Show me on the global leaderboard"
+              hint="Others see only your username, points and streak"
+              checked={Boolean(s.showOnGlobal)}
+              disabled={busy.has('showOnGlobal')}
+              onChange={handleGlobalSwitch}
+            />
+
+            {sw('shareStats', 'Friends see my points and streak', 'Needed for the leaderboard')}
+            {sw('shareHeatmap', 'Friends see my Namaz heatmap', 'Off by default, so ibadat stays between you and Allah')}
+            {sw('shareQuran', 'Friends see my Quran streak', 'Off by default. Nafl is always private.')}
+            {sw('weeklyReport', 'Weekly report', 'Only for you, never for friends')}
+            {sw('showHadith', 'Show hadith cards', 'One short hadith on some screens')}
+          </div>
+        </Card>
+
+        {blockedList.length > 0 && (
+          <Card title="Blocked users">
+            <div className="stack stack--sm">
+              {blockedList.map((bu) => (
+                <div key={bu.id} className="list-row">
+                  <span className="grow strong">@{bu.username}</span>
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--ghost"
+                    disabled={unblocking === bu.id}
+                    onClick={() => handleUnblock(bu)}
+                  >
+                    {unblocking === bu.id ? 'Unblocking…' : 'Unblock'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        <AccountCard />
+      </div>
 
       {usernameDialogOpen && (
         <UsernameDialog

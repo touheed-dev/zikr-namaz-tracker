@@ -36,7 +36,7 @@ export default function Badges() {
       {list.error && <ErrorState error={list.error} onRetry={list.reload} />}
       {!list.loading && !list.error && shown.length === 0 && <EmptyState title="No badges here yet" />}
       {!list.loading && !list.error && shown.length > 0 && (
-        <ul className="grid-2" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        <ul className="grid-2 badges-grid" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
           {shown.map((b) => (
             <li key={b.id} className="badge-card" aria-label={`${b.name}. ${b.earned ? 'Earned' : b.note}. ${b.visibility === 'friends' ? 'Friends see this' : 'Only you'}`}>
               <div className="row row--between">

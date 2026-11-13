@@ -24,6 +24,14 @@
 
 ## What's new
 
+### v1.2.1 — 14 Nov 2026: Desktop layout
+- Responsive layout adapting seamlessly from phones (< 768px) and tablets (768px–1099px) to wide desktop screens (≥ 1100px)
+- Fixed left sidebar on desktop with app branding, full navigation items, active route indicators, and profile quick-access
+- Two-column layouts on desktop for Today (Namaz on left; Zikr, Quran, Nafl, and Hadith on right), Ramadan mode, Track (/streak), and Friends
+- Masonry-style 2-column settings grid on Profile
+- Focused single-column reading and logs view (max-width 760px) for More, Quran, Nafl, History, Badges, and Challenges
+- Fully preserved mobile experience with zero layout shift or visual changes on phones
+
 ### v1.2 — 14 Nov 2026: More tab and themes
 - Dedicated **More** tab (`/more`) organizing Profile & settings, Nafl, Log and edit, Weekly report, Badges, and Challenges
 - 7 calm, muted solid-colour palettes: Forest (default), Sage, Coffee, Slate, Plum, Terracotta, and Sand (light theme)

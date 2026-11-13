@@ -151,105 +151,109 @@ function NormalToday() {
         zikrDone={(slot) => zk.isDone(today, slot)}
       />
 
-      <Card title="Namaz" aside="Jamaat +10 · Alone +4">
-        {pr.loading && <Skeleton height={330} />}
-        {!pr.loading && pr.error && <ErrorState error={pr.error} onRetry={pr.reload} />}
-        {!pr.loading && !pr.error && (
-          <div>
-            {PRAYERS.map((p) => (
-              <PrayerRow
-                key={p}
-                prayer={p}
-                timeLabel={timeLabel(p)}
-                entry={pr.get(today, p)}
-                pending={pr.isPending(today, p)}
-                onMark={(status) => onMark(p, status)}
-              />
-            ))}
-          </div>
-        )}
-        <div className="small muted">
-          {timesError ? 'Prayer times unavailable right now. ' : ''}
-          Changing a marked prayer earns 0 points. <Link to="/history">Log and edit past days</Link>
-        </div>
-      </Card>
-
-      {!hadithInZikr && <HadithCard screen="today" variant={qazaUsed ? 'qaza' : undefined} />}
-
-      <Card title="Zikr">
-        {zk.error ? <ErrorState error={zk.error} onRetry={zk.reload} /> : (
-          <div className="grid-2">
-            {[['morning', 'Morning azkar'], ['evening', 'Evening azkar']].map(([slot, label]) => {
-              const done = zk.isDone(today, slot);
-              return (
-                <button
-                  key={slot}
-                  type="button"
-                  className="toggle-btn"
-                  aria-pressed={done}
-                  disabled={zk.loading || zk.isPending(today, slot)}
-                  onClick={() => toggleZikr(slot)}
-                >
-                  {done && <Icon name="check" size={18} />}
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-        <div className="small muted">Both in a day earns +3. Changes after marking earn 0.</div>
-      </Card>
-
-      {hadithInZikr && <HadithCard screen="today" variant="zikr" />}
-
-      <Card>
-        <div className="row row--between">
-          <div>
-            <h2 className="card__title">Quran today</h2>
-            {qr.error ? (
-              <div className="small muted">Could not load. <button type="button" className="linkbtn" onClick={() => qr.reload()}>Retry</button></div>
-            ) : (
-              <>
-                <div>{qr.loading ? '—' : `${pages} ${pages === 1 ? 'page' : 'pages'} · ${paraLabel(pages)}`}</div>
-                <div className="small muted">{s ? `${s.quranStreak}-day Quran streak` : ' '}</div>
-              </>
+      <div className="layout-2col">
+        <div className="layout-2col__left">
+          <Card title="Namaz" aside="Jamaat +10 · Alone +4">
+            {pr.loading && <Skeleton height={330} />}
+            {!pr.loading && pr.error && <ErrorState error={pr.error} onRetry={pr.reload} />}
+            {!pr.loading && !pr.error && (
+              <div>
+                {PRAYERS.map((p) => (
+                  <PrayerRow
+                    key={p}
+                    prayer={p}
+                    timeLabel={timeLabel(p)}
+                    entry={pr.get(today, p)}
+                    pending={pr.isPending(today, p)}
+                    onMark={(status) => onMark(p, status)}
+                  />
+                ))}
+              </div>
             )}
-          </div>
-          <Link to="/quran" className="btn btn--primary">Log more</Link>
+            <div className="small muted">
+              {timesError ? 'Prayer times unavailable right now. ' : ''}
+              Changing a marked prayer earns 0 points. <Link to="/history">Log and edit past days</Link>
+            </div>
+          </Card>
         </div>
-      </Card>
 
-      <Card>
-        <div className="row row--between">
-          <div className="row">
-            <Icon name="lock" size={18} />
-            <h2 className="card__title">Nafl</h2>
-            <span className="small muted">Only you can see this</span>
-          </div>
-          <Link to="/nafl" className="btn btn--ghost btn--sm">Open</Link>
+        <div className="layout-2col__right">
+          <Card title="Zikr">
+            {zk.error ? <ErrorState error={zk.error} onRetry={zk.reload} /> : (
+              <div className="grid-2">
+                {[['morning', 'Morning azkar'], ['evening', 'Evening azkar']].map(([slot, label]) => {
+                  const done = zk.isDone(today, slot);
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      className="toggle-btn"
+                      aria-pressed={done}
+                      disabled={zk.loading || zk.isPending(today, slot)}
+                      onClick={() => toggleZikr(slot)}
+                    >
+                      {done && <Icon name="check" size={18} />}
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <div className="small muted">Both in a day earns +3. Changes after marking earn 0.</div>
+          </Card>
+
+          <HadithCard screen="today" variant={qazaUsed ? 'qaza' : (hadithInZikr ? 'zikr' : undefined)} />
+
+          <Card>
+            <div className="row row--between">
+              <div>
+                <h2 className="card__title">Quran today</h2>
+                {qr.error ? (
+                  <div className="small muted">Could not load. <button type="button" className="linkbtn" onClick={() => qr.reload()}>Retry</button></div>
+                ) : (
+                  <>
+                    <div>{qr.loading ? '—' : `${pages} ${pages === 1 ? 'page' : 'pages'} · ${paraLabel(pages)}`}</div>
+                    <div className="small muted">{s ? `${s.quranStreak}-day Quran streak` : ' '}</div>
+                  </>
+                )}
+              </div>
+              <Link to="/quran" className="btn btn--primary">Log more</Link>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="row row--between">
+              <div className="row">
+                <Icon name="lock" size={18} />
+                <h2 className="card__title">Nafl</h2>
+                <span className="small muted">Only you can see this</span>
+              </div>
+              <Link to="/nafl" className="btn btn--ghost btn--sm">Open</Link>
+            </div>
+            {nf.error ? <ErrorState error={nf.error} onRetry={nf.reload} /> : (
+              <div className="seg seg--4">
+                {NAFL_ITEMS.slice(0, 4).map((i) => {
+                  const done = Boolean(nf.get(today, i.name)?.done);
+                  return (
+                    <button
+                      key={i.name}
+                      type="button"
+                      className="toggle-btn toggle-btn--light"
+                      style={{ minHeight: 48, fontSize: 13 }}
+                      aria-pressed={done}
+                      disabled={nf.loading || nf.isPending(today, i.name)}
+                      onClick={() => toggleNafl(i.name)}
+                    >
+                      {i.short || i.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <div className="small muted">{naflDone} of 5 today · no points, never shared</div>
+          </Card>
         </div>
-        {nf.error ? <ErrorState error={nf.error} onRetry={nf.reload} /> : (
-          <div className="seg seg--4">
-            {NAFL_ITEMS.slice(0, 4).map((i) => {
-              const done = Boolean(nf.get(today, i.name)?.done);
-              return (
-                <button
-                  key={i.name}
-                  type="button"
-                  className="toggle-btn toggle-btn--light"
-                  style={{ minHeight: 48, fontSize: 13 }}
-                  aria-pressed={done}
-                  disabled={nf.loading || nf.isPending(today, i.name)}
-                  onClick={() => toggleNafl(i.name)}
-                >
-                  {i.short || i.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-        <div className="small muted">{naflDone} of 5 today · no points, never shared</div>
-      </Card>
+      </div>
     </>
   );
 }
