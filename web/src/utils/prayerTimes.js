@@ -134,8 +134,54 @@ export function parseAladhan(json) {
   };
 }
 
+/**
+ * Safely parse an input into a valid Date object.
+ * Accepts Date object, ISO string, HH:MM, or timestamp.
+ */
+export function toDate(input, refDate = new Date()) {
+  if (input == null || input === '' || input === '--:--') return null;
+  if (input instanceof Date) {
+    return isNaN(input.getTime()) ? null : input;
+  }
+  if (typeof input === 'number') {
+    const d = new Date(input);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof input === 'string') {
+    const s = input.trim();
+    if (!s || s === '--:--') return null;
+    const matchHHMM = s.match(/^(\d{1,2}):(\d{2})$/);
+    if (matchHHMM) {
+      const h = Number(matchHHMM[1]);
+      const m = Number(matchHHMM[2]);
+      if (h >= 0 && h < 24 && m >= 0 && m < 60) {
+        const base = refDate instanceof Date && !isNaN(refDate.getTime()) ? refDate : new Date();
+        return new Date(base.getFullYear(), base.getMonth(), base.getDate(), h, m, 0, 0);
+      }
+      return null;
+    }
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 export function dateToHHMM(date, timeZone) {
-  if (!date || isNaN(date.getTime())) return '';
+  if (date == null || date === '') return '--:--';
+
+  let d = date;
+  if (typeof d === 'string') {
+    const match = d.trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (match) {
+      return `${String(match[1]).padStart(2, '0')}:${match[2]}`;
+    }
+    d = new Date(d);
+  }
+
+  if (!(d instanceof Date) || isNaN(d.getTime())) {
+    return '--:--';
+  }
+
   if (timeZone) {
     try {
       const parts = new Intl.DateTimeFormat('en-GB', {
@@ -143,7 +189,7 @@ export function dateToHHMM(date, timeZone) {
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
-      }).formatToParts(date);
+      }).formatToParts(d);
       const h = parts.find((p) => p.type === 'hour')?.value || '00';
       const m = parts.find((p) => p.type === 'minute')?.value || '00';
       return `${h}:${m}`;
@@ -151,16 +197,23 @@ export function dateToHHMM(date, timeZone) {
       /* fallback to local time */
     }
   }
-  const h = String(date.getHours()).padStart(2, '0');
-  const m = String(date.getMinutes()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const m = String(d.getMinutes()).padStart(2, '0');
   return `${h}:${m}`;
 }
 
 export function calculatePrayerTimes(opts = {}) {
   const cachedConfig = getCachedPrayerConfig();
   const dateISO = opts.dateISO || new Date().toISOString().slice(0, 10);
-  const lat = opts.lat ?? cachedConfig?.lat ?? DEFAULT_COORDINATES.lat;
-  const lng = opts.lng ?? cachedConfig?.lng ?? DEFAULT_COORDINATES.lng;
+
+  let rawLat = opts.lat ?? cachedConfig?.lat;
+  if (rawLat == null || isNaN(Number(rawLat))) rawLat = DEFAULT_COORDINATES.lat;
+  const lat = Number(rawLat);
+
+  let rawLng = opts.lng ?? cachedConfig?.lng;
+  if (rawLng == null || isNaN(Number(rawLng))) rawLng = DEFAULT_COORDINATES.lng;
+  const lng = Number(rawLng);
+
   const method = opts.method ?? cachedConfig?.method ?? 'karachi';
   const madhab = opts.madhab ?? cachedConfig?.madhab ?? opts.asr ?? 'hanafi';
   const highLat = opts.highLat ?? cachedConfig?.highLat ?? 'none';
@@ -207,60 +260,177 @@ export function calculatePrayerTimes(opts = {}) {
   };
 }
 
-function cacheKey(opts) {
+function cacheKey(opts = {}) {
   const normMethod = normalizeMethod(opts.method);
-  return `${CACHE_PREFIX}${opts.dateISO}:${opts.lat}:${opts.lng}:${normMethod}:${opts.madhab || opts.asr}:${opts.highLat}:${opts.ishaEnd}`;
+  const lat = opts.lat ?? DEFAULT_COORDINATES.lat;
+  const lng = opts.lng ?? DEFAULT_COORDINATES.lng;
+  return `${CACHE_PREFIX}${opts.dateISO}:${lat}:${lng}:${normMethod}:${opts.madhab || opts.asr || 'hanafi'}:${opts.highLat || 'none'}:${opts.ishaEnd || 'fajr'}`;
 }
 
 export function getCachedPrayerConfig() {
-  return getJSON(CONFIG_CACHE_KEY, null);
+  try {
+    const val = getJSON(CONFIG_CACHE_KEY, null);
+    if (!val || typeof val !== 'object') return null;
+    if (val.lat != null && isNaN(Number(val.lat))) return null;
+    if (val.lng != null && isNaN(Number(val.lng))) return null;
+    return val;
+  } catch {
+    return null;
+  }
 }
 
 export function setCachedPrayerConfig(config) {
-  setJSON(CONFIG_CACHE_KEY, config);
+  if (!config || typeof config !== 'object') return;
+  try {
+    setJSON(CONFIG_CACHE_KEY, config);
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+/**
+ * Validates and hydrates cached prayer times so raw contains real Date objects.
+ * Safely handles and converts legacy Aladhan string-only caches or JSON-stringified Dates.
+ */
+export function hydratePrayerTimes(data, dateISO) {
+  if (!data || typeof data !== 'object') return null;
+  const prayers = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  for (const p of prayers) {
+    if (typeof data[p] !== 'string' || !/^\d{1,2}:\d{2}$/.test(data[p])) {
+      return null;
+    }
+  }
+
+  let refDate = new Date();
+  if (dateISO) {
+    const [y, m, d] = String(dateISO).split('-').map(Number);
+    if (y && m && d) refDate = new Date(y, m - 1, d);
+  }
+
+  const raw = {};
+  for (const p of [...prayers, 'midnight']) {
+    const rawVal = data.raw?.[p];
+    const parsed = toDate(rawVal, refDate) || toDate(data[p], refDate);
+    if (parsed) {
+      raw[p] = parsed;
+    }
+  }
+
+  return {
+    ...data,
+    midnight: data.midnight || (raw.midnight ? dateToHHMM(raw.midnight) : '--:--'),
+    ishaEnd: data.ishaEnd || data.fajr,
+    raw,
+  };
 }
 
 /**
  * On-device offline prayer times with localStorage caching.
  * Maintains identical exported API so Today page keeps working.
  */
-export async function getPrayerTimes(opts, _extra) {
+export async function getPrayerTimes(opts = {}, _extra) {
   const key = cacheKey(opts);
-  const cached = getJSON(key);
-  if (cached) return cached;
+  try {
+    const cached = getJSON(key);
+    if (cached) {
+      const hydrated = hydratePrayerTimes(cached, opts.dateISO);
+      if (hydrated) return hydrated;
+      removeItem(key);
+    }
+  } catch {
+    removeItem(key);
+  }
 
   const times = calculatePrayerTimes(opts);
 
-  // keep only today's entries to stop the cache growing forever
-  for (const k of keysWithPrefix(CACHE_PREFIX)) {
-    if (!k.startsWith(`${CACHE_PREFIX}${opts.dateISO}:`)) removeItem(k);
+  try {
+    // keep only today's entries to stop the cache growing forever
+    for (const k of keysWithPrefix(CACHE_PREFIX)) {
+      if (!k.startsWith(`${CACHE_PREFIX}${opts.dateISO}:`)) removeItem(k);
+    }
+    setJSON(key, times);
+  } catch {
+    /* ignore storage errors */
   }
-  setJSON(key, times);
   return times;
 }
 
-/** "05:20" -> "5:20 am" */
-export function formatTime12(hhmm) {
-  if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return '';
-  let [h, m] = hhmm.split(':').map(Number);
+/**
+ * Formats a time into 12-hour format e.g. "5:20 am", "12:20 pm".
+ * Accepts Date object, ISO string, or "HH:MM".
+ * Returns "--:--" for invalid or missing input.
+ */
+export function formatTime12(input) {
+  if (input == null || input === '' || input === '--:--') return '--:--';
+
+  let h = null;
+  let m = null;
+
+  if (input instanceof Date) {
+    if (isNaN(input.getTime())) return '--:--';
+    h = input.getHours();
+    m = input.getMinutes();
+  } else if (typeof input === 'string') {
+    const s = input.trim();
+    const match = s.match(/^(\d{1,2}):(\d{2})$/);
+    if (match) {
+      h = Number(match[1]);
+      m = Number(match[2]);
+    } else {
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        h = d.getHours();
+        m = d.getMinutes();
+      }
+    }
+  }
+
+  if (h == null || m == null || isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) {
+    return '--:--';
+  }
+
   const suffix = h >= 12 ? 'pm' : 'am';
   h %= 12;
   if (h === 0) h = 12;
   return `${h}:${String(m).padStart(2, '0')} ${suffix}`;
 }
 
-/** Minutes from `now` (a Date) until hh:mm today. Negative if past. */
+/** Minutes from `now` (a Date) until hh:mm or target time today. Negative if past. */
 export function minutesUntil(hhmm, now = new Date()) {
-  if (!hhmm) return null;
-  const [h, m] = hhmm.split(':').map(Number);
-  const target = new Date(now);
-  target.setHours(h, m, 0, 0);
-  return Math.round((target - now) / 60000);
+  if (hhmm == null || hhmm === '' || hhmm === '--:--') return null;
+
+  const nowDate = now instanceof Date && !isNaN(now.getTime()) ? now : new Date();
+
+  if (hhmm instanceof Date) {
+    if (isNaN(hhmm.getTime())) return null;
+    return Math.round((hhmm.getTime() - nowDate.getTime()) / 60000);
+  }
+
+  if (typeof hhmm === 'string') {
+    const s = hhmm.trim();
+    const match = s.match(/^(\d{1,2}):(\d{2})$/);
+    if (match) {
+      const h = Number(match[1]);
+      const m = Number(match[2]);
+      if (h >= 0 && h < 24 && m >= 0 && m < 60) {
+        const target = new Date(nowDate);
+        target.setHours(h, m, 0, 0);
+        return Math.round((target.getTime() - nowDate.getTime()) / 60000);
+      }
+      return null;
+    }
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      return Math.round((d.getTime() - nowDate.getTime()) / 60000);
+    }
+  }
+
+  return null;
 }
 
 /** "2h 48m", "35m", "now" */
 export function formatCountdown(mins) {
-  if (mins === null || mins === undefined) return '';
+  if (mins === null || mins === undefined || isNaN(mins)) return '';
   if (mins <= 0) return 'now';
   const h = Math.floor(mins / 60);
   const m = mins % 60;
@@ -269,7 +439,7 @@ export function formatCountdown(mins) {
 
 /** Live countdown with seconds: "1h 24m 10s", "35m 12s", "now" */
 export function formatLiveCountdown(diffMs) {
-  if (diffMs == null || diffMs <= 0) return 'now';
+  if (diffMs == null || isNaN(diffMs) || diffMs <= 0) return 'now';
   const totalSecs = Math.floor(diffMs / 1000);
   const h = Math.floor(totalSecs / 3600);
   const m = Math.floor((totalSecs % 3600) / 60);
@@ -281,7 +451,7 @@ export function formatLiveCountdown(diffMs) {
 }
 
 export function getCurrentAndNextPrayer(times, now = new Date()) {
-  if (!times) return null;
+  if (!times || typeof times !== 'object') return null;
   const list = [
     { id: 'fajr', label: 'Fajr', isPrayer: true },
     { id: 'sunrise', label: 'Sunrise', isPrayer: false },
@@ -291,14 +461,13 @@ export function getCurrentAndNextPrayer(times, now = new Date()) {
     { id: 'isha', label: 'Isha', isPrayer: true },
   ];
 
-  const nowMs = now.getTime();
+  const nowDate = now instanceof Date && !isNaN(now.getTime()) ? now : new Date();
+  const nowMs = nowDate.getTime();
   const todayEntries = list.map((item) => {
-    let dateObj = times.raw?.[item.id];
-    if (!dateObj && times[item.id]) {
-      const [h, m] = times[item.id].split(':').map(Number);
-      dateObj = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
-    }
-    return { ...item, time: times[item.id], date: dateObj, ms: dateObj ? dateObj.getTime() : 0 };
+    const rawVal = times.raw?.[item.id];
+    const dateObj = toDate(rawVal, nowDate) || toDate(times[item.id], nowDate);
+    const ms = dateObj && !isNaN(dateObj.getTime()) ? dateObj.getTime() : 0;
+    return { ...item, time: times[item.id] || '--:--', date: dateObj, ms };
   });
 
   // Find next upcoming prayer
@@ -309,38 +478,39 @@ export function getCurrentAndNextPrayer(times, now = new Date()) {
       id: nextPrayer.id,
       label: nextPrayer.label,
       time: nextPrayer.time,
-      diffMs: nextPrayer.ms - nowMs,
-      diffMins: Math.round((nextPrayer.ms - nowMs) / 60000),
+      diffMs: Math.max(0, nextPrayer.ms - nowMs),
+      diffMins: Math.max(0, Math.round((nextPrayer.ms - nowMs) / 60000)),
     };
   } else {
     // Tomorrow Fajr
-    const tomorrowFajrMs = todayEntries[0].ms + 24 * 60 * 60 * 1000;
+    const fajrBaseMs = todayEntries[0].ms > 0 ? todayEntries[0].ms : nowMs;
+    const tomorrowFajrMs = fajrBaseMs + 24 * 60 * 60 * 1000;
     next = {
       id: 'fajr',
       label: 'Fajr',
-      time: times.fajr,
-      diffMs: tomorrowFajrMs - nowMs,
-      diffMins: Math.round((tomorrowFajrMs - nowMs) / 60000),
+      time: times.fajr || '--:--',
+      diffMs: Math.max(0, tomorrowFajrMs - nowMs),
+      diffMins: Math.max(0, Math.round((tomorrowFajrMs - nowMs) / 60000)),
       isTomorrow: true,
     };
   }
 
   // Determine current period
   let current = null;
-  if (nowMs < todayEntries[0].ms) {
-    current = { id: 'isha', label: 'Isha / Night', time: times.isha };
-  } else if (nowMs < todayEntries[1].ms) {
-    current = { id: 'fajr', label: 'Fajr', time: times.fajr };
-  } else if (nowMs < todayEntries[2].ms) {
-    current = { id: 'sunrise', label: 'Ishraq / Duha', time: times.sunrise };
-  } else if (nowMs < todayEntries[3].ms) {
-    current = { id: 'dhuhr', label: 'Dhuhr', time: times.dhuhr };
-  } else if (nowMs < todayEntries[4].ms) {
-    current = { id: 'asr', label: 'Asr', time: times.asr };
-  } else if (nowMs < todayEntries[5].ms) {
-    current = { id: 'maghrib', label: 'Maghrib', time: times.maghrib };
+  if (todayEntries[0].ms > 0 && nowMs < todayEntries[0].ms) {
+    current = { id: 'isha', label: 'Isha / Night', time: times.isha || '--:--' };
+  } else if (todayEntries[1].ms > 0 && nowMs < todayEntries[1].ms) {
+    current = { id: 'fajr', label: 'Fajr', time: times.fajr || '--:--' };
+  } else if (todayEntries[2].ms > 0 && nowMs < todayEntries[2].ms) {
+    current = { id: 'sunrise', label: 'Ishraq / Duha', time: times.sunrise || '--:--' };
+  } else if (todayEntries[3].ms > 0 && nowMs < todayEntries[3].ms) {
+    current = { id: 'dhuhr', label: 'Dhuhr', time: times.dhuhr || '--:--' };
+  } else if (todayEntries[4].ms > 0 && nowMs < todayEntries[4].ms) {
+    current = { id: 'asr', label: 'Asr', time: times.asr || '--:--' };
+  } else if (todayEntries[5].ms > 0 && nowMs < todayEntries[5].ms) {
+    current = { id: 'maghrib', label: 'Maghrib', time: times.maghrib || '--:--' };
   } else {
-    current = { id: 'isha', label: 'Isha', time: times.isha };
+    current = { id: 'isha', label: 'Isha', time: times.isha || '--:--' };
   }
 
   return { current, next };

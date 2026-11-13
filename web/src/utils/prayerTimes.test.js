@@ -9,6 +9,12 @@ import {
   formatLiveCountdown,
   getCurrentAndNextPrayer,
   normalizeMethod,
+  formatTime12,
+  dateToHHMM,
+  minutesUntil,
+  formatCountdown,
+  hydratePrayerTimes,
+  toDate,
 } from './prayerTimes.js';
 
 test('prayer time order: Fajr < Sunrise < Dhuhr < Asr < Maghrib < Isha across multiple cities & dates', () => {
@@ -186,5 +192,163 @@ test('getCurrentAndNextPrayer correctly identifies current and upcoming prayer',
   assert.equal(res.next.id, 'asr');
   assert.equal(res.next.time, '15:40');
   assert.ok(res.next.diffMins > 0);
+});
+
+test('new user with no location (default config) produces valid times and prayer info', () => {
+  // Brand new user has null/undefined lat and lng, no cached config
+  const configs = [
+    {},
+    { lat: null, lng: null },
+    { lat: undefined, lng: undefined, locationLabel: null },
+    { lat: null, lng: null, method: null, madhab: null },
+  ];
+
+  for (const cfg of configs) {
+    const times = calculatePrayerTimes({ ...cfg, dateISO: '2026-11-14' });
+    assert.ok(times, 'times object is returned');
+    assert.match(times.fajr, /^\d{2}:\d{2}$/);
+    assert.match(times.sunrise, /^\d{2}:\d{2}$/);
+    assert.match(times.dhuhr, /^\d{2}:\d{2}$/);
+    assert.match(times.asr, /^\d{2}:\d{2}$/);
+    assert.match(times.maghrib, /^\d{2}:\d{2}$/);
+    assert.match(times.isha, /^\d{2}:\d{2}$/);
+    assert.match(times.midnight, /^\d{2}:\d{2}$/);
+    assert.match(times.ishaEnd, /^\d{2}:\d{2}$/);
+
+    // Raw fields must be genuine Date objects
+    assert.ok(times.raw.fajr instanceof Date);
+    assert.ok(!isNaN(times.raw.fajr.getTime()));
+    assert.ok(times.raw.isha instanceof Date);
+    assert.ok(!isNaN(times.raw.isha.getTime()));
+
+    // getCurrentAndNextPrayer must execute without throwing (e.g. dateObj.getTime is not a function)
+    const info = getCurrentAndNextPrayer(times, new Date(2026, 10, 14, 12, 0));
+    assert.ok(info.current);
+    assert.ok(info.next);
+    assert.ok(typeof info.next.diffMs === 'number');
+  }
+});
+
+test('formatters handle Date, ISO string, HH:MM, undefined, and invalid input defensively', () => {
+  // formatTime12
+  assert.equal(formatTime12('05:20'), '5:20 am');
+  assert.equal(formatTime12('12:20'), '12:20 pm');
+  assert.equal(formatTime12('00:05'), '12:05 am');
+  assert.equal(formatTime12('19:10'), '7:10 pm');
+  assert.equal(formatTime12('7:05'), '7:05 am');
+  assert.equal(formatTime12(new Date(2026, 10, 14, 15, 45)), '3:45 pm');
+  assert.equal(formatTime12('2026-11-14T05:20:00.000Z').includes(':'), true);
+
+  // invalid / missing returns '--:--' instead of throwing
+  assert.equal(formatTime12(undefined), '--:--');
+  assert.equal(formatTime12(null), '--:--');
+  assert.equal(formatTime12(''), '--:--');
+  assert.equal(formatTime12('--:--'), '--:--');
+  assert.equal(formatTime12('invalid'), '--:--');
+  assert.equal(formatTime12({}), '--:--');
+
+  // dateToHHMM
+  assert.equal(dateToHHMM(new Date(2026, 10, 14, 5, 20)), '05:20');
+  assert.equal(dateToHHMM('05:20'), '05:20');
+  assert.equal(dateToHHMM('5:20'), '05:20');
+  assert.equal(dateToHHMM(undefined), '--:--');
+  assert.equal(dateToHHMM(null), '--:--');
+  assert.equal(dateToHHMM(''), '--:--');
+  assert.equal(dateToHHMM('invalid'), '--:--');
+
+  // minutesUntil
+  const now = new Date(2026, 10, 14, 12, 0);
+  assert.equal(minutesUntil('12:30', now), 30);
+  assert.equal(minutesUntil(new Date(2026, 10, 14, 12, 30), now), 30);
+  assert.equal(minutesUntil(undefined, now), null);
+  assert.equal(minutesUntil(null, now), null);
+  assert.equal(minutesUntil('--:--', now), null);
+  assert.equal(minutesUntil('invalid', now), null);
+
+  // formatCountdown
+  assert.equal(formatCountdown(null), '');
+  assert.equal(formatCountdown(undefined), '');
+  assert.equal(formatCountdown('invalid'), '');
+  assert.equal(formatCountdown(0), 'now');
+  assert.equal(formatCountdown(-10), 'now');
+  assert.equal(formatCountdown(45), '45m');
+  assert.equal(formatCountdown(150), '2h 30m');
+
+  // formatLiveCountdown
+  assert.equal(formatLiveCountdown(null), 'now');
+  assert.equal(formatLiveCountdown(undefined), 'now');
+  assert.equal(formatLiveCountdown('invalid'), 'now');
+  assert.equal(formatLiveCountdown(-100), 'now');
+
+  // toDate
+  assert.ok(toDate(new Date()) instanceof Date);
+  assert.ok(toDate('05:20') instanceof Date);
+  assert.ok(toDate('2026-11-14T05:20:00.000Z') instanceof Date);
+  assert.equal(toDate(null), null);
+  assert.equal(toDate(undefined), null);
+  assert.equal(toDate('--:--'), null);
+  assert.equal(toDate('invalid'), null);
+});
+
+test('old cache shapes are migrated or ignored safely', () => {
+  // 1. Legacy Aladhan cache (no raw property at all, just string times)
+  const legacyAladhan = {
+    fajr: '05:12',
+    sunrise: '06:30',
+    dhuhr: '12:24',
+    asr: '15:44',
+    maghrib: '18:04',
+    isha: '19:18',
+  };
+
+  const hydratedLegacy = hydratePrayerTimes(legacyAladhan, '2026-11-14');
+  assert.ok(hydratedLegacy, 'legacy cache is hydrated');
+  assert.ok(hydratedLegacy.raw.fajr instanceof Date);
+  assert.ok(!isNaN(hydratedLegacy.raw.fajr.getTime()));
+  assert.ok(hydratedLegacy.raw.isha instanceof Date);
+
+  // getCurrentAndNextPrayer works on hydrated legacy cache without throwing
+  const infoLegacy = getCurrentAndNextPrayer(hydratedLegacy, new Date(2026, 10, 14, 13, 0));
+  assert.equal(infoLegacy.current.id, 'dhuhr');
+  assert.equal(infoLegacy.next.id, 'asr');
+
+  // 2. Cache with JSON-serialized string raw dates (e.g. from JSON.stringify of Date)
+  const stringifiedRawCache = {
+    fajr: '05:12',
+    sunrise: '06:30',
+    dhuhr: '12:24',
+    asr: '15:44',
+    maghrib: '18:04',
+    isha: '19:18',
+    midnight: '00:15',
+    ishaEnd: '05:12',
+    raw: {
+      fajr: '2026-11-14T00:12:00.000Z',
+      sunrise: '2026-11-14T01:30:00.000Z',
+      dhuhr: '2026-11-14T07:24:00.000Z',
+      asr: '2026-11-14T10:44:00.000Z',
+      maghrib: '2026-11-14T13:04:00.000Z',
+      isha: '2026-11-14T14:18:00.000Z',
+      midnight: '2026-11-14T19:15:00.000Z',
+    },
+  };
+
+  // Even if passed directly into getCurrentAndNextPrayer without hydration
+  const infoDirect = getCurrentAndNextPrayer(stringifiedRawCache, new Date('2026-11-14T08:00:00.000Z'));
+  assert.ok(infoDirect.current);
+  assert.ok(infoDirect.next);
+  assert.equal(infoDirect.current.id, 'dhuhr');
+  assert.equal(infoDirect.next.id, 'asr');
+
+  // And hydrated version has proper Date objects
+  const hydratedStringified = hydratePrayerTimes(stringifiedRawCache, '2026-11-14');
+  assert.ok(hydratedStringified.raw.fajr instanceof Date);
+  assert.ok(!isNaN(hydratedStringified.raw.fajr.getTime()));
+
+  // 3. Corrupted cache is safely rejected / ignored
+  assert.equal(hydratePrayerTimes(null), null);
+  assert.equal(hydratePrayerTimes('string'), null);
+  assert.equal(hydratePrayerTimes({ random: 123 }), null);
+  assert.equal(hydratePrayerTimes({ fajr: 'bad' }), null);
 });
 
