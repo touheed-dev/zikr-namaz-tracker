@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react" alt="React 18" />
   <img src="https://img.shields.io/badge/Vite-5-646CFF?style=flat&logo=vite" alt="Vite 5" />
   <img src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat&logo=supabase" alt="Supabase" />
-  <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql" alt="PostgreSQL 16" />
+  <img src="https://img.shields.io/badge/PostgreSQL-17-336791?style=flat&logo=postgresql" alt="PostgreSQL 17" />
   <img src="https://img.shields.io/badge/Vercel-Deployment-000000?style=flat&logo=vercel" alt="Vercel" />
 </p>
 
