@@ -130,6 +130,8 @@ function NormalToday() {
         </Link>
       </header>
 
+      <GlobalAnnouncementCard />
+
       <div className="grid-2">
         <div className="stat">
           <div className="stat__label">Current streak</div>
@@ -140,8 +142,6 @@ function NormalToday() {
           <div className="stat__value">{pr.loading ? '—' : `${doneToday} / 5`}</div>
         </div>
       </div>
-
-      <GlobalAnnouncementCard />
 
       <Reminder
         times={times}

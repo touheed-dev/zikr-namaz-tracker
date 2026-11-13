@@ -235,6 +235,15 @@
   color: var(--muted); text-decoration: none; font-size: 12px; font-weight: 500; min-height: 44px;
 }
 .bottom-nav__link[aria-current='page'] { color: var(--light); font-weight: 700; }
+.bottom-nav__dot {
+  position: absolute;
+  top: -1px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+}
 
 /* ------------------------------------------------------------ skeleton */
 .skeleton { border-radius: var(--r-lg); background: linear-gradient(90deg, var(--card) 25%, var(--card-deep) 50%, var(--card) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
