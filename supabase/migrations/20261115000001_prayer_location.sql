@@ -65,12 +65,12 @@ begin
       if not (jsonb_typeof(v) = 'null' or (jsonb_typeof(v) = 'number' and (v #>> '{}')::numeric between -90 and 90)) then
         raise exception 'lat must be between -90 and 90' using errcode = '22023';
       end if;
-      v_clean := v_clean || jsonb_build_object(k, case when jsonb_typeof(v) = 'null' then 'null'::jsonb else round((v #>> '{}')::numeric, 2) end);
+      v_clean := v_clean || jsonb_build_object(k, case when jsonb_typeof(v) = 'null' then 'null'::jsonb else to_jsonb(round((v #>> '{}')::numeric, 2)) end);
     elsif k = 'lng' then
       if not (jsonb_typeof(v) = 'null' or (jsonb_typeof(v) = 'number' and (v #>> '{}')::numeric between -180 and 180)) then
         raise exception 'lng must be between -180 and 180' using errcode = '22023';
       end if;
-      v_clean := v_clean || jsonb_build_object(k, case when jsonb_typeof(v) = 'null' then 'null'::jsonb else round((v #>> '{}')::numeric, 2) end);
+      v_clean := v_clean || jsonb_build_object(k, case when jsonb_typeof(v) = 'null' then 'null'::jsonb else to_jsonb(round((v #>> '{}')::numeric, 2)) end);
     elsif k in ('locationLabel', 'label') then
       if not (jsonb_typeof(v) = 'null' or (jsonb_typeof(v) = 'string' and char_length(btrim(v #>> '{}')) <= 80)) then
         raise exception '% must be at most 80 characters', k using errcode = '22023';
@@ -215,3 +215,4 @@ revoke execute on function public.update_settings(jsonb) from public, anon;
 
 grant execute on function public.export_my_data() to authenticated;
 revoke execute on function public.export_my_data() from public, anon;
+

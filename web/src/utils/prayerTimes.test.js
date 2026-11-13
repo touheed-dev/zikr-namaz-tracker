@@ -187,3 +187,4 @@ test('getCurrentAndNextPrayer correctly identifies current and upcoming prayer',
   assert.equal(res.next.time, '15:40');
   assert.ok(res.next.diffMins > 0);
 });
+
