@@ -50,3 +50,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - SELECT-only Row Level Security (RLS) policies across all application tables.
 - Revoked direct table modifications (`INSERT`, `UPDATE`, `DELETE`) for `anon` and `authenticated` roles.
 - Friend invites keyed by email address to prevent account enumeration.
+

@@ -87,3 +87,4 @@ The following design decisions extend the base data model to ensure auditability
 | Production Build & Lint | Verified | ESLint execution (`--max-warnings 0`) and Vite production bundle generation. |
 | Hosted Supabase Services | Verified | Verified with Supabase Auth trigger simulation and remote schema deployment. |
 | Aladhan API Integration | Verified | Verified parsing and fallback caching against API mock fixtures. |
+

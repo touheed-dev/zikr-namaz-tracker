@@ -101,15 +101,17 @@ A focused collection of tools designed to help you build regular habits with qui
     <td align="center" width="33%">
       <img src="docs/screenshots/ramadan-today.png" width="240" alt="Ramadan mode" /><br />
       <strong>Ramadan mode</strong><br />
-      Fasting tracker, sehri and iftar countdowns, and a 20-rakat Taraweeh counter.
+      Iftar and sehri countdown, roza, taraweeh and last-ten-nights tracker.
     </td>
     <td align="center" width="33%">
-      <img src="docs/screenshots/profile.png" width="240" alt="Privacy settings" /><br />
-      <strong>Privacy settings</strong><br />
-      Granular switches controlling what friends and global peers can view.
+      <img src="docs/screenshots/profile-settings.png" width="240" alt="Settings" /><br />
+      <strong>Settings</strong><br />
+      Ramadan mode, Hijri date adjustment, prayer-time location and method, in-app reminders.
     </td>
     <td align="center" width="33%">
-      <!-- Placeholder spacer for balanced 3x3 layout -->
+      <img src="docs/screenshots/profile-privacy.png" width="240" alt="Privacy" /><br />
+      <strong>Privacy</strong><br />
+      Choose exactly what friends see, opt in to the global leaderboard, export or delete your data.
     </td>
   </tr>
 </table>
