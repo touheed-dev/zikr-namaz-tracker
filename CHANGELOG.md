@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-11-14
+
+### Added
+- Quran audio listening streamed from mp3quran.net public API v3.
+- Curated list of 7 Hafs 'an 'Asim Murattal reciters matched at runtime: Yasser Al-Dosari (default), Mishary Rashid Alafasy, Abdul Rahman Al-Sudais, Maher Al-Muaiqly, Saad Al-Ghamdi, Mahmoud Khalil Al-Husary, and Abdul Basit Abdul Samad.
+- Static dataset of all 114 Surahs (`web/src/assets/surahs.js`) with Arabic names, English titles, ayah counts (6,236 total), and revelation types (Makki/Madani), validated by unit tests.
+- "Continue my khatam" listening mode with automatic progression from Surah 1 to 114, progress tracking, and debounced 15-second bookmarking.
+- Friday Sunnah recitations card automatically displayed on Jumu'ah (`isoWeekday(today) === 5`) featuring Surahs Al-Kahf (18), Al-Jumu'a (62), Al-Munaafiqoon (63), Al-A'laa (87), and Al-Ghaashiya (88).
+- Global mini-player bar fixed above bottom navigation with play/pause, close button, playback progress bar, and tap-to-navigate.
+- Full Media Session API integration for background playback controls, lock screen metadata, artwork, track seeking, and track skipping.
+- Listening time accumulation (counted only when visible or media session active) flushed periodically via `add_listen_seconds` (up to 300s per call).
+- Database tables `quran_listen_progress` and `quran_listen_logs` with row-level security and `SECURITY DEFINER` RPCs (`set_listen_position`, `add_listen_seconds`, `get_listen_summary`).
+- Updated `export_my_data` RPC to include `listenProgress` and `listenLogs` in the GDPR export archive.
+
+### Security
+- Quran listening is strictly private: never awards leaderboard points, never marks Quran pages as read automatically, and is never exposed to friends or global leaderboards.
+- Audio streaming uses client-side fetching from mp3quran.net with Content Security Policy (`media-src` and `connect-src`) allowances in `web/vercel.json`.
+
 ## [1.2.1] - 2026-11-14
 
 ### Added

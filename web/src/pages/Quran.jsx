@@ -1,13 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useToday } from '../context/AuthContext.jsx';
 import { useQuran } from '../hooks/useLogs.js';
 import { useSummary } from '../hooks/useSummary.js';
+import { useQuranPlayer } from '../context/QuranPlayerContext.jsx';
 import { QuranMap } from '../components/heatmap/Heatmaps.jsx';
 import { HadithCard } from '../components/ui/HadithCard.jsx';
-import { Card, Icon, ProgressBar, LoadingBlocks, ErrorState } from '../components/ui/index.jsx';
+import {
+  Card,
+  Icon,
+  ProgressBar,
+  LoadingBlocks,
+  ErrorState,
+  Tabs,
+  Skeleton,
+} from '../components/ui/index.jsx';
 import { PageHead } from '../components/layout/AppShell.jsx';
-import { addDays, startOfWeek, daysBetween } from '../utils/dates.js';
+import { addDays, startOfWeek, daysBetween, isoWeekday } from '../utils/dates.js';
 import { paraLabel, khatamProgress } from '../utils/points.js';
+import { formatListenDuration } from '../utils/quranAudio.js';
+import { SURAHS } from '../assets/surahs.js';
 import { useToast } from '../context/ToastContext.jsx';
 
 const QUICK = [
@@ -17,7 +29,29 @@ const QUICK = [
   { pages: 40, label: '+2 para' },
 ];
 
+const QURAN_TABS = [
+  { value: 'read', label: 'Read' },
+  { value: 'listen', label: 'Listen' },
+];
+
+const FRIDAY_SURAHS = [18, 62, 63, 87, 88];
+
 export default function Quran() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get('tab') === 'listen' ? 'listen' : 'read';
+
+  const setTab = (tab) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (tab === 'read') next.delete('tab');
+        else next.set('tab', tab);
+        return next;
+      },
+      { replace: true },
+    );
+  };
+
   const today = useToday();
   const from = addDays(addDays(startOfWeek(today), 6), -34);
   const qr = useQuran(from, today);
@@ -27,11 +61,17 @@ export default function Quran() {
   const [pages, setPages] = useState(null);
   const value = pages ?? saved;
 
+  const player = useQuranPlayer();
+  const [surahFilter, setSurahFilter] = useState('');
+
   // when today's saved value arrives (or the day changes), reset the stepper
-  useEffect(() => { setPages(null); }, [today, saved]);
+  useEffect(() => {
+    setPages(null);
+  }, [today, saved]);
 
   const weekStart = startOfWeek(today);
-  const weekPages = qr.entries.filter((e) => daysBetween(weekStart, e.date) >= 0 && daysBetween(e.date, today) >= 0)
+  const weekPages = qr.entries
+    .filter((e) => daysBetween(weekStart, e.date) >= 0 && daysBetween(e.date, today) >= 0)
     .reduce((n, e) => n + e.pages, 0);
   const k = khatamProgress(qr.totalPages);
   const s = summary.data;
@@ -43,77 +83,386 @@ export default function Quran() {
       setPages(null);
       summary.refresh();
       toast.show(`Saved: ${value} pages today`);
-    } catch { /* rolled back + toast */ }
+    } catch {
+      /* rolled back + toast */
+    }
   };
 
+  // Filter surahs for listen tab
+  const filteredSurahs = useMemo(() => {
+    const q = surahFilter.trim().toLowerCase();
+    if (!q) return SURAHS;
+    return SURAHS.filter((s) => {
+      return (
+        String(s.n) === q ||
+        s.en.toLowerCase().includes(q) ||
+        s.ar.includes(q)
+      );
+    });
+  }, [surahFilter]);
+
+  const isFriday = isoWeekday(today) === 5;
+
+  const khatamSurahNum = player.summary?.position?.surah || 1;
+  const khatamSurahObj = SURAHS.find((item) => item.n === khatamSurahNum) || SURAHS[0];
+  const isKhatamPlaying = player.isPlaying && player.mode === 'khatam';
+
   if (qr.loading) {
-    return (<><PageHead title="Quran" /><LoadingBlocks heights={[96, 330, 250, 90]} /></>);
+    return (
+      <>
+        <PageHead title="Quran" />
+        <LoadingBlocks heights={[96, 330, 250, 90]} />
+      </>
+    );
   }
   if (qr.error) {
-    return (<><PageHead title="Quran" /><ErrorState error={qr.error} onRetry={qr.reload} /></>);
+    return (
+      <>
+        <PageHead title="Quran" />
+        <ErrorState error={qr.error} onRetry={qr.reload} />
+      </>
+    );
   }
 
   return (
     <>
       <PageHead title="Quran" />
-      <div className="grid-2">
-        <div className="stat">
-          <div className="stat__label">Quran streak</div>
-          <div className="stat__value">{s ? `${s.quranStreak} ${s.quranStreak === 1 ? 'day' : 'days'}` : '—'}</div>
-          <div className="stat__sub">Best {s ? s.quranBest : '—'}</div>
-        </div>
-        <div className="stat">
-          <div className="stat__label">This week</div>
-          <div className="stat__value">{weekPages} pages</div>
-          <div className="stat__sub">≈ {paraLabel(weekPages)}</div>
-        </div>
-      </div>
+      <Tabs
+        label="Quran sections"
+        items={QURAN_TABS}
+        value={currentTab}
+        onChange={setTab}
+      />
 
-      <Card title="Log today's recitation">
-        <div className="field__label" id="pages-label">Pages</div>
-        <div className="stepper" role="group" aria-labelledby="pages-label">
-          <button type="button" className="stepper__btn" onClick={() => setPages(clamp(value - 1))} aria-label="One page less" disabled={value <= 0}>
-            <Icon name="minus" />
-          </button>
-          <div className="stepper__val" aria-live="polite">
-            <div className="stepper__num">{value}</div>
-            <div className="small muted">pages · ≈ {paraLabel(value)}</div>
+      {currentTab === 'read' ? (
+        <>
+          <div className="grid-2">
+            <div className="stat">
+              <div className="stat__label">Quran streak</div>
+              <div className="stat__value">
+                {s ? `${s.quranStreak} ${s.quranStreak === 1 ? 'day' : 'days'}` : '—'}
+              </div>
+              <div className="stat__sub">Best {s ? s.quranBest : '—'}</div>
+            </div>
+            <div className="stat">
+              <div className="stat__label">This week</div>
+              <div className="stat__value">{weekPages} pages</div>
+              <div className="stat__sub">≈ {paraLabel(weekPages)}</div>
+            </div>
           </div>
-          <button type="button" className="stepper__btn stepper__btn--plus" onClick={() => setPages(clamp(value + 1))} aria-label="One page more" disabled={value >= 604}>
-            <Icon name="plus" />
-          </button>
-        </div>
-        <div className="small muted">Or by para (1 para ≈ 20 pages)</div>
-        <div className="row row--wrap">
-          {QUICK.map((q) => (
-            <button key={q.pages} type="button" className="chip chip--btn" onClick={() => setPages(clamp(value + q.pages))}>
-              {q.label}
+
+          <Card title="Log today's recitation">
+            <div className="field__label" id="pages-label">Pages</div>
+            <div className="stepper" role="group" aria-labelledby="pages-label">
+              <button
+                type="button"
+                className="stepper__btn"
+                onClick={() => setPages(clamp(value - 1))}
+                aria-label="One page less"
+                disabled={value <= 0}
+              >
+                <Icon name="minus" />
+              </button>
+              <div className="stepper__val" aria-live="polite">
+                <div className="stepper__num">{value}</div>
+                <div className="small muted">pages · ≈ {paraLabel(value)}</div>
+              </div>
+              <button
+                type="button"
+                className="stepper__btn stepper__btn--plus"
+                onClick={() => setPages(clamp(value + 1))}
+                aria-label="One page more"
+                disabled={value >= 604}
+              >
+                <Icon name="plus" />
+              </button>
+            </div>
+            <div className="small muted">Or by para (1 para ≈ 20 pages)</div>
+            <div className="row row--wrap">
+              {QUICK.map((q) => (
+                <button
+                  key={q.pages}
+                  type="button"
+                  className="chip chip--btn"
+                  onClick={() => setPages(clamp(value + q.pages))}
+                >
+                  {q.label}
+                </button>
+              ))}
+              <button type="button" className="chip chip--btn" onClick={() => setPages(0)}>
+                Reset
+              </button>
+            </div>
+            <button
+              type="button"
+              className="btn btn--primary btn--block"
+              onClick={save}
+              disabled={qr.saving || value === saved}
+            >
+              {qr.saving ? 'Saving…' : 'Save for today'}
             </button>
-          ))}
-          <button type="button" className="chip chip--btn" onClick={() => setPages(0)}>Reset</button>
-        </div>
-        <button type="button" className="btn btn--primary btn--block" onClick={save} disabled={qr.saving || value === saved}>
-          {qr.saving ? 'Saving…' : 'Save for today'}
-        </button>
-        <div className="tiny muted center">Save sets today&apos;s total. Quran never adds leaderboard points.</div>
-      </Card>
+            <div className="tiny muted center">
+              Save sets today&apos;s total. Quran never adds leaderboard points.
+            </div>
+          </Card>
 
-      <Card title="Quran map" aside="Last 5 weeks">
-        <QuranMap entries={qr.entries} today={today} />
-        <div className="legend">
-          <span className="legend__item"><span className="cell" />None</span>
-          <span className="legend__item"><span className="cell cell--z1" />Under ¼ para</span>
-          <span className="legend__item"><span className="cell cell--z2" />¼ para or more</span>
-        </div>
-      </Card>
+          <Card title="Quran map" aside="Last 5 weeks">
+            <QuranMap entries={qr.entries} today={today} />
+            <div className="legend">
+              <span className="legend__item">
+                <span className="cell" />
+                None
+              </span>
+              <span className="legend__item">
+                <span className="cell cell--z1" />
+                Under ¼ para
+              </span>
+              <span className="legend__item">
+                <span className="cell cell--z2" />
+                ¼ para or more
+              </span>
+            </div>
+          </Card>
 
-      <Card title="Khatam progress" aside={`Para ${k.para} · ${k.percent}%`}>
-        <ProgressBar value={k.current} max={604} label="Khatam progress" />
-        <div className="small muted">
-          {k.completed > 0 ? `${k.completed} khatam${k.completed > 1 ? 's' : ''} completed. ` : ''}
-          {qr.totalPages} pages in total. Private by default. Friends see your Quran streak only if you turn it on in Profile.
-        </div>
-      </Card>
+          <Card title="Khatam progress" aside={`Para ${k.para} · ${k.percent}%`}>
+            <ProgressBar value={k.current} max={604} label="Khatam progress" />
+            <div className="small muted">
+              {k.completed > 0 ? `${k.completed} khatam${k.completed > 1 ? 's' : ''} completed. ` : ''}
+              {qr.totalPages} pages in total. Private by default. Friends see your Quran streak only if you turn it on in Profile.
+            </div>
+          </Card>
+        </>
+      ) : (
+        <>
+          {/* Private listening stats line */}
+          <div className="card card--deep row" style={{ gap: 10, padding: '12px 14px' }}>
+            <Icon name="lock" size={18} className="muted" />
+            <div className="grow small">
+              <div>
+                <span className="strong">Listened today:</span>{' '}
+                {formatListenDuration(player.summary?.today?.seconds || 0)}
+                <span className="muted"> · </span>
+                <span className="strong">This week:</span>{' '}
+                {formatListenDuration(player.summary?.week?.seconds || 0)}
+              </div>
+              <div className="tiny muted" style={{ marginTop: 2 }}>
+                Private to you. Listening never gives leaderboard points and never marks pages as read.
+              </div>
+            </div>
+          </div>
+
+          {/* Reciter selector */}
+          <Card title="Reciter">
+            {player.recitersLoading ? (
+              <Skeleton height={46} />
+            ) : player.recitersError ? (
+              <div className="stack">
+                <div className="small muted">Could not load reciters: {player.recitersError}</div>
+                <button
+                  type="button"
+                  className="btn btn--outline btn--sm"
+                  onClick={player.loadReciters}
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <div className="field">
+                <select
+                  value={player.selectedReciterId}
+                  onChange={(e) => player.setSelectedReciterId(e.target.value)}
+                  className="input"
+                  aria-label="Select reciter"
+                >
+                  {player.reciters.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.displayName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </Card>
+
+          {/* Continue my Khatam Card */}
+          <Card title="Continue my khatam" aside={`Surah ${khatamSurahNum} / 114`}>
+            <ProgressBar
+              value={khatamSurahNum}
+              max={114}
+              label="Khatam listening progress"
+            />
+            <div className="small muted row row--between">
+              <span>{khatamSurahObj.en} ({khatamSurahObj.ar})</span>
+              <span>{Math.round((khatamSurahNum / 114) * 100)}%</span>
+            </div>
+            <button
+              type="button"
+              className="btn btn--primary btn--block mt-8"
+              onClick={() => {
+                if (isKhatamPlaying) {
+                  player.togglePlay();
+                } else {
+                  player.resumeKhatam();
+                }
+              }}
+            >
+              <Icon name={isKhatamPlaying ? 'pause' : 'play'} size={18} />
+              <span>
+                {isKhatamPlaying
+                  ? 'Pause khatam'
+                  : player.summary?.position?.position_seconds > 0
+                  ? `Resume Khatam (${khatamSurahObj.en})`
+                  : `Start Khatam (${khatamSurahObj.en})`}
+              </span>
+            </button>
+            <div className="tiny muted center">
+              Plays sequentially through all 114 surahs and auto-advances.
+            </div>
+          </Card>
+
+          {/* Friday Sunnah Recitations Card */}
+          {isFriday && (
+            <Card title="Friday Sunnah recitations" aside="Jumu'ah">
+              <div className="small muted">
+                Surahs recommended for recitation and reflection on Friday:
+              </div>
+              <div className="stack stack--sm mt-8">
+                {FRIDAY_SURAHS.map((num) => {
+                  const s = SURAHS.find((item) => item.n === num);
+                  if (!s) return null;
+                  const isCur = player.currentSurah === s.n;
+                  const isCurPlaying = isCur && player.isPlaying;
+                  const isAvailable =
+                    !player.selectedReciter ||
+                    !player.selectedReciter.surahSet ||
+                    player.selectedReciter.surahSet.has(s.n);
+
+                  return (
+                    <div
+                      key={s.n}
+                      className={`surah-item ${isCur ? 'surah-item--active' : ''}`}
+                    >
+                      <div className="surah-item__num">{s.n}</div>
+                      <div className="surah-item__info">
+                        <div className="surah-item__names">
+                          <span className="surah-item__en">{s.en}</span>
+                          <span className="surah-item__ar">{s.ar}</span>
+                        </div>
+                        <div className="surah-item__meta">
+                          {s.ayahs} ayahs · {s.type === 'makki' ? 'Makki' : 'Madani'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="surah-item__btn"
+                        onClick={() => {
+                          if (isCur) {
+                            player.togglePlay();
+                          } else {
+                            player.playSurah(s.n, { mode: 'single', position: 0 });
+                          }
+                        }}
+                        disabled={!isAvailable}
+                        aria-label={
+                          isCurPlaying
+                            ? `Pause Surah ${s.en}`
+                            : `Play Surah ${s.en}`
+                        }
+                      >
+                        <Icon name={isCurPlaying ? 'pause' : 'play'} size={18} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+
+          {/* Browse all Surahs */}
+          <Card title="All surahs" aside="114 surahs">
+            <div className="field">
+              <input
+                type="search"
+                className="input"
+                placeholder="Search surah name or number…"
+                value={surahFilter}
+                onChange={(e) => setSurahFilter(e.target.value)}
+                aria-label="Search surahs"
+              />
+            </div>
+
+            <div className="stack stack--sm mt-8">
+              {filteredSurahs.map((s) => {
+                const isCur = player.currentSurah === s.n;
+                const isCurPlaying = isCur && player.isPlaying;
+                const isAvailable =
+                  !player.selectedReciter ||
+                  !player.selectedReciter.surahSet ||
+                  player.selectedReciter.surahSet.has(s.n);
+
+                return (
+                  <div
+                    key={s.n}
+                    className={`surah-item ${isCur ? 'surah-item--active' : ''}`}
+                  >
+                    <div className="surah-item__num">{s.n}</div>
+                    <div className="surah-item__info">
+                      <div className="surah-item__names">
+                        <span className="surah-item__en">{s.en}</span>
+                        <span className="surah-item__ar">{s.ar}</span>
+                      </div>
+                      <div className="surah-item__meta">
+                        {s.ayahs} ayahs · {s.type === 'makki' ? 'Makki' : 'Madani'}
+                        {!isAvailable && (
+                          <span className="muted" style={{ marginLeft: 6 }}>
+                            (Not available for this reciter)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="surah-item__btn"
+                      onClick={() => {
+                        if (isCur) {
+                          player.togglePlay();
+                        } else {
+                          player.playSurah(s.n, { mode: 'single', position: 0 });
+                        }
+                      }}
+                      disabled={!isAvailable}
+                      aria-label={
+                        isCurPlaying
+                          ? `Pause Surah ${s.en}`
+                          : `Play Surah ${s.en}`
+                      }
+                    >
+                      <Icon name={isCurPlaying ? 'pause' : 'play'} size={18} />
+                    </button>
+                  </div>
+                );
+              })}
+              {filteredSurahs.length === 0 && (
+                <div className="small muted center" style={{ padding: '16px 0' }}>
+                  No surahs matching &quot;{surahFilter}&quot;
+                </div>
+              )}
+            </div>
+
+            <div className="tiny muted center mt-12">
+              Audio provided by{' '}
+              <a
+                href="https://mp3quran.net"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                mp3quran.net
+              </a>
+              .
+            </div>
+          </Card>
+        </>
+      )}
 
       <HadithCard screen="quran" />
     </>

@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ModeProvider } from './context/ModeContext.jsx';
+import { QuranPlayerProvider } from './context/QuranPlayerContext.jsx';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 import { registerServiceWorker } from './sw-register.js';
@@ -16,7 +17,9 @@ createRoot(document.getElementById('root')).render(
         <ModeProvider>
           <ThemeProvider>
             <AuthProvider>
-              <App />
+              <QuranPlayerProvider>
+                <App />
+              </QuranPlayerProvider>
             </AuthProvider>
           </ThemeProvider>
         </ModeProvider>
