@@ -68,3 +68,22 @@ export const nafl = {
     return rpc('set_nafl', { p_date: date, p_name: name, p_done: Boolean(done), p_value: value });
   },
 };
+
+// ---------------------------------------------------------------- quranListen
+export const quranListen = {
+  async setPosition(reciter, surah, position) {
+    return rpc('set_listen_position', {
+      p_reciter: reciter,
+      p_surah: Math.round(Number(surah) || 1),
+      p_position: Math.max(0, Math.round(Number(position) || 0)),
+    });
+  },
+  async addSeconds(seconds) {
+    const s = Math.round(Number(seconds) || 0);
+    if (s <= 0) return null;
+    return rpc('add_listen_seconds', { p_seconds: s });
+  },
+  async summary() {
+    return rpc('get_listen_summary');
+  },
+};

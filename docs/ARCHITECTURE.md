@@ -27,6 +27,7 @@ All state mutations in the application go through `SECURITY DEFINER` functions i
 | Global leaderboard privacy | `get_global_leaderboard` | Returns only username, points, streak, and relationship status (`isMe`, `isFriend`, `requested`). Real names, emails, heatmaps, and logs are never exposed. |
 | Tap-to-add friend requests | `send_friend_request_to_user`, `list_friend_requests` | Global friend requests store `via = 'global'`. Recipient emails are resolved server-side and never returned to the client. |
 | User blocking | `block_user`, `unblock_user`, `list_blocked`, `friend_blocks` | Blocking wipes pending requests between both parties. Outgoing requests from blocked users return generic success responses invisibly without creating a row. |
+| Quran listening privacy | `set_listen_position`, `add_listen_seconds`, `get_listen_summary` | Strictly private. Listening NEVER awards leaderboard points and never marks Quran pages as read automatically. Seconds addition capped at 300 per call and 86,400 daily. |
 
 ### Private schema (`app_private`)
 
@@ -47,6 +48,13 @@ The following design decisions extend the base data model to ensure auditability
   - `profiles.username`: Unique case-insensitive lowercase string with regex enforcement (`^[a-z][a-z0-9_]{2,19}$`) and reserved keyword filters.
   - `friend_blocks`: Blocker-to-blocked relationship table with RLS (`blocker = auth.uid()` SELECT only) and cascade deletions.
   - `get_global_leaderboard`: Dynamically ranks the top 50 active, opted-in profiles based on period boundaries computed in the viewer's local timezone.
+- **Quran listening (`20261114000001_quran_listening.sql`)**:
+  - `quran_listen_progress`: Stores current listening bookmark per user (`reciter`, `surah` [1..114], `position_seconds`, `updated_at`). RLS SELECT-only for owning user (`user_id = auth.uid()`), write grants revoked from `anon` and `authenticated`.
+  - `quran_listen_logs`: Daily accumulated listening duration (`user_id`, `log_date`, `seconds`, primary key `(user_id, log_date)`). RLS SELECT-only for owning user, write grants revoked.
+  - `set_listen_position(p_reciter, p_surah, p_position)`: Validates surah (1..114) and position (>= 0), upserts progress for `auth.uid()`.
+  - `add_listen_seconds(p_seconds)`: Validates `p_seconds` between 1 and 300, checks against daily cap (86,400s), and aggregates into `quran_listen_logs` for user's local `today`.
+  - `get_listen_summary()`: Returns today's seconds, 7-day week seconds, all-time total seconds, current position bookmark, and completed khatam surah count.
+  - `export_my_data`: Updated to include `listenProgress` and `listenLogs` in full data export payload.
 
 ---
 
@@ -55,6 +63,7 @@ The following design decisions extend the base data model to ensure auditability
 - **Date Handling**: All calendar calculations use local `YYYY-MM-DD` strings constructed from discrete date parts (`src/utils/dates.js`). `toISOString()` is intentionally avoided to prevent timezone shifts across Greenwich. Local "today" is derived from the profile's registered IANA timezone.
 - **API Architecture**: Client functions in `src/api/*` return raw data or throw structured error objects. Expired sessions or 401 responses trigger state cleanup and redirect to `/login` with return-path preservation.
 - **Optimistic UI Updates**: State changes for prayers, zikr, nafl, Quran, settings, and friend requests update optimistically with rollback and error toast notifications on network failure. In-flight requests lock repetitive button triggers.
+- **Quran Audio Player**: Audio is streamed on demand from mp3quran.net public API v3 (Hafs 'an 'Asim Murattal reciters). Reciters metadata is cached in `localStorage` for 7 days. Audio element persists globally across route navigation. Background playback and lock screen controls are managed via the Media Session API. Playback position is bookmarked every 15s in Khatam mode, and listening seconds are accumulated and flushed every 60s when visible or playing via Media Session.
 - **Prayer Times & Hijri Dates**: Daily prayer times are fetched from the Aladhan API in the client and cached per day in `localStorage`. Hijri dates are derived from the browser's `Intl` API using the Umm al-Qura calendar with manual offset calibration (`zn_hijri_offset`).
 - **Hadith Integrity**: `src/assets/hadith.js` stores exactly 10 authentic hadith narrations. A unit test verifies SHA-256 fingerprints of every Arabic text, English translation, and source citation. Hadith selection rotates deterministically per calendar day.
 - **Service Worker (`public/sw.js`)**: Supabase and third-party API requests use a network-only strategy. Document navigations follow network-first with an offline fallback page. Version-stamped asset bundles are cached cache-first.

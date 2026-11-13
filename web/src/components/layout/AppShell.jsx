@@ -2,12 +2,13 @@ import { Suspense, useState, useEffect } from 'react';
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth, useToday } from '../../context/AuthContext.jsx';
 import { useMode } from '../../context/ModeContext.jsx';
+import { useQuranPlayer } from '../../context/QuranPlayerContext.jsx';
 import {
   shouldShowGlobalAnnouncement,
   isGlobalAnnouncementDismissed,
 } from '../../utils/announcements.js';
 import { Icon } from '../ui/Icon.jsx';
-import { LoadingBlocks, ErrorState } from '../ui/index.jsx';
+import { LoadingBlocks, ErrorState, QuranMiniPlayer } from '../ui/index.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 
 const NORMAL_TABS = [
@@ -103,6 +104,7 @@ export function BottomNav() {
 export function ProtectedLayout() {
   const { status, loadError, reload } = useAuth();
   const location = useLocation();
+  const { currentSurah } = useQuranPlayer();
 
   if (status === 'loading') {
     return (
@@ -118,7 +120,7 @@ export function ProtectedLayout() {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
   return (
-    <div className="app">
+    <div className={`app ${currentSurah ? 'app--has-player' : ''}`}>
       <a href="#main" className="skip-link">Skip to content</a>
       <main className="page" id="main" tabIndex={-1}>
         <ErrorBoundary resetKey={location.pathname}>
@@ -127,6 +129,7 @@ export function ProtectedLayout() {
           </Suspense>
         </ErrorBoundary>
       </main>
+      <QuranMiniPlayer />
       <BottomNav />
     </div>
   );

@@ -24,6 +24,15 @@
 
 ## What's new
 
+### v1.3 — 14 Nov 2026: Quran listening
+- Listen to Quran recitations with curated reciters (Hafs 'an 'Asim, Murattal) streamed from [mp3quran.net](https://mp3quran.net)
+- Curated reciters matched at runtime: Yasser Al-Dosari (default), Mishary Rashid Alafasy, Abdul Rahman Al-Sudais, Maher Al-Muaiqly, Saad Al-Ghamdi, Mahmoud Khalil Al-Husary, Abdul Basit Abdul Samad
+- Continue my Khatam: tracks listening progress sequentially through all 114 surahs with auto-advance and debounced position bookmarking
+- Friday Sunnah recitations: special Jumu'ah card on Fridays for Surahs Al-Kahf, Al-Jumu'a, Al-Munaafiqoon, Al-A'laa, and Al-Ghaashiya
+- Global mini-player with Media Session API background controls and lock screen playback
+- Searchable directory of all 114 surahs with Arabic typography and ayah counts
+- Strictly private: listening time is confidential, never awards leaderboard points, and never marks reading pages automatically
+
 ### v1.2 — 14 Nov 2026: More tab and themes
 - Dedicated **More** tab (`/more`) organizing Profile & settings, Nafl, Log and edit, Weekly report, Badges, and Challenges
 - 7 calm, muted solid-colour palettes: Forest (default), Sage, Coffee, Slate, Plum, Terracotta, and Sand (light theme)
@@ -274,6 +283,7 @@ Ideas under consideration for upcoming iterations (explorations, not binding com
 
 ## Acknowledgements
 
+- Audio recitations streamed from the [mp3quran.net](https://mp3quran.net) public API (Hafs 'an 'Asim, Murattal).
 - Prayer calculations powered by the [Aladhan API](https://aladhan.com/prayer-times-api).
 - Hijri calendar dates derived from JavaScript `Intl.DateTimeFormat` (Umm al-Qura calendar).
 - Hadith narrations sourced from Sahih al-Bukhari and Sahih Muslim (verified via [sunnah.com](https://sunnah.com)).

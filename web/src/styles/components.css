@@ -398,3 +398,187 @@
   justify-content: center;
   flex: 0 0 auto;
 }
+
+/* --------------------------------------------------- quran audio player */
+.quran-mini-player {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom));
+  z-index: 19;
+  pointer-events: none;
+}
+.quran-mini-player__bar {
+  max-width: 480px;
+  margin: 0 auto;
+  pointer-events: auto;
+  position: relative;
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line-soft);
+  border-right: 1px solid var(--line-soft);
+  border-radius: var(--r-md) var(--r-md) 0 0;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: 56px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.quran-mini-player__progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--gold);
+  transition: width 0.2s linear;
+}
+.quran-mini-player__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: pointer;
+}
+.quran-mini-player__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--inset);
+  color: var(--light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.quran-mini-player__titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.quran-mini-player__title {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+.quran-mini-player__sub {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.quran-mini-player__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+.quran-mini-player__btn {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0;
+}
+.quran-mini-player__btn:hover {
+  background: var(--card-deep);
+}
+.quran-mini-player__btn--close {
+  color: var(--muted);
+}
+.quran-mini-player__btn--close:hover {
+  color: var(--text);
+}
+
+/* Surah list items */
+.surah-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--inset);
+  border: 1px solid var(--line-soft);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.surah-item--active {
+  border-color: var(--light);
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+}
+.surah-item__num {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+.surah-item--active .surah-item__num {
+  background: var(--light);
+  color: var(--light-text);
+}
+.surah-item__info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.surah-item__names {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.surah-item__en {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+.surah-item__ar {
+  font-family: var(--font-ar);
+  font-size: 16px;
+  color: var(--muted);
+}
+.surah-item__meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.surah-item__btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.surah-item__btn:hover:not(:disabled) {
+  background: var(--card-deep);
+  border-color: var(--light);
+}
+.surah-item--active .surah-item__btn {
+  background: var(--light);
+  color: var(--light-text);
+  border-color: var(--light);
+}
