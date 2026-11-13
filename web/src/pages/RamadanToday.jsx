@@ -5,6 +5,7 @@ import { useNafl, useQuran } from '../hooks/useLogs.js';
 import { usePrayerTimes } from '../hooks/usePrayerTimes.js';
 import { useNow } from '../hooks/useNow.js';
 import { HadithCard } from '../components/ui/HadithCard.jsx';
+import { GlobalAnnouncementCard } from '../components/ui/GlobalAnnouncementCard.jsx';
 import { Card, Icon, ErrorState, Skeleton } from '../components/ui/index.jsx';
 import { formatTime12, minutesUntil, formatCountdown } from '../utils/prayerTimes.js';
 import { khatamProgress, paraLabel } from '../utils/points.js';
@@ -97,6 +98,8 @@ export default function RamadanToday() {
         </div>
         <span style={{ color: 'var(--gold)' }}><Icon name="sparkle" size={20} /></span>
       </header>
+
+      <GlobalAnnouncementCard />
 
       <IftarCard times={times} timesError={timesError} now={now} />
 

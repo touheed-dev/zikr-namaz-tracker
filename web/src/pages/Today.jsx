@@ -8,6 +8,7 @@ import { usePrayerTimes } from '../hooks/usePrayerTimes.js';
 import { useNow } from '../hooks/useNow.js';
 import { PrayerRow } from '../components/prayer/PrayerRow.jsx';
 import { HadithCard } from '../components/ui/HadithCard.jsx';
+import { GlobalAnnouncementCard } from '../components/ui/GlobalAnnouncementCard.jsx';
 import { Card, Icon, Skeleton, ErrorState } from '../components/ui/index.jsx';
 import { formatDay, dayOfYear } from '../utils/dates.js';
 import { PRAYERS, PRAYER_LABELS, DONE_STATUSES, NAFL_ITEMS, formatPoints, paraLabel } from '../utils/points.js';
@@ -139,6 +140,8 @@ function NormalToday() {
           <div className="stat__value">{pr.loading ? '—' : `${doneToday} / 5`}</div>
         </div>
       </div>
+
+      <GlobalAnnouncementCard />
 
       <Reminder
         times={times}

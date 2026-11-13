@@ -4,8 +4,10 @@ import { useAuth, useToday } from '../context/AuthContext.jsx';
 import { useMode } from '../context/ModeContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { usePrayers } from '../hooks/useLogs.js';
-import { profile } from '../api/index.js';
+import { useAsync } from '../hooks/useAsync.js';
+import { profile, friends as friendsApi } from '../api/index.js';
 import { Card, Switch, Icon, Dialog } from '../components/ui/index.jsx';
+import { UsernameDialog } from '../components/ui/UsernameDialog.jsx';
 import { PageHead } from '../components/layout/AppShell.jsx';
 import { METHODS } from '../utils/prayerTimes.js';
 import { formatHijri } from '../utils/hijri.js';
@@ -178,10 +180,39 @@ export default function Profile() {
   const today = useToday();
   const { mode, setMode, hijriOffset, setHijriOffset, ramadanActive } = useMode();
   const { save, busy } = useSetting();
+  const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
+  const toast = useToast();
+  const blockedQuery = useAsync(() => friendsApi.blocked(), []);
+  const [unblocking, setUnblocking] = useState(null);
+
   const s = user.settings;
   const sw = (key, label, hint) => (
     <Switch key={key} label={label} hint={hint} checked={Boolean(s[key])} disabled={busy.has(key)} onChange={(v) => save({ [key]: v })} />
   );
+
+  const handleGlobalSwitch = async (checked) => {
+    if (checked && !user.username) {
+      setUsernameDialogOpen(true);
+      return;
+    }
+    await save({ showOnGlobal: checked });
+  };
+
+  const handleUnblock = async (blockedUser) => {
+    if (unblocking) return;
+    setUnblocking(blockedUser.id);
+    try {
+      await friendsApi.unblock(blockedUser.id);
+      toast.show(`Unblocked @${blockedUser.username}`);
+      blockedQuery.reload({ silent: true });
+    } catch (err) {
+      if (!err.auth) toast.show(err.message || 'Could not unblock');
+    } finally {
+      setUnblocking(null);
+    }
+  };
+
+  const blockedList = blockedQuery.data || [];
 
   return (
     <>
@@ -223,6 +254,31 @@ export default function Profile() {
 
       <Card title="Privacy">
         <div>
+          <div className="list-row" style={{ paddingLeft: 0, paddingRight: 0 }}>
+            <span className="grow">
+              <span className="strong">Public username</span>
+              <br />
+              <span className="small muted">
+                {user.username ? `@${user.username}` : 'Not set'}
+              </span>
+            </span>
+            <button
+              type="button"
+              className="btn btn--sm btn--ghost"
+              onClick={() => setUsernameDialogOpen(true)}
+            >
+              {user.username ? 'Edit' : 'Set username'}
+            </button>
+          </div>
+
+          <Switch
+            label="Show me on the global leaderboard"
+            hint="Others see only your username, points and streak"
+            checked={Boolean(s.showOnGlobal)}
+            disabled={busy.has('showOnGlobal')}
+            onChange={handleGlobalSwitch}
+          />
+
           {sw('shareStats', 'Friends see my points and streak', 'Needed for the leaderboard')}
           {sw('shareHeatmap', 'Friends see my Namaz heatmap', 'Off by default, so ibadat stays between you and Allah')}
           {sw('shareQuran', 'Friends see my Quran streak', 'Off by default. Nafl is always private.')}
@@ -230,6 +286,26 @@ export default function Profile() {
           {sw('showHadith', 'Show hadith cards', 'One short hadith on some screens')}
         </div>
       </Card>
+
+      {blockedList.length > 0 && (
+        <Card title="Blocked users">
+          <div className="stack stack--sm">
+            {blockedList.map((bu) => (
+              <div key={bu.id} className="list-row">
+                <span className="grow strong">@{bu.username}</span>
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  disabled={unblocking === bu.id}
+                  onClick={() => handleUnblock(bu)}
+                >
+                  {unblocking === bu.id ? 'Unblocking…' : 'Unblock'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card className="card--tight">
         <nav aria-label="More" className="list">
@@ -243,6 +319,16 @@ export default function Profile() {
       </Card>
 
       <AccountCard />
+
+      {usernameDialogOpen && (
+        <UsernameDialog
+          onClose={() => setUsernameDialogOpen(false)}
+          currentUsername={user?.username}
+          onSaved={async () => {
+            // If they didn't have showOnGlobal set, prompt/keep it clean
+          }}
+        />
+      )}
     </>
   );
 }

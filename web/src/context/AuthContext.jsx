@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS = {
   smartFix: true, smartFixChoice: null,
   shareStats: true, shareHeatmap: false, shareQuran: false,
   weeklyReport: true, showHadith: true,
+  showOnGlobal: false,
 };
 
 const AuthContext = createContext(null);

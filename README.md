@@ -128,6 +128,10 @@ and validate every argument. `INSERT/UPDATE/DELETE` is revoked on every table fo
 | Friend-challenge rewards: templates only, reward set by the server, granted once, counted only from eligible, non-edited logs, and at most one open challenge per template | `create_challenge`, `check_challenges` |
 | Friends see only name, points and streak. Heatmap and Quran streak only if the owner opts in. Nafl, Ramadan items and the report never | `get_leaderboard`, `friend_heatmap`, `friend_quran_streak` |
 | No account enumeration: identical response for known and unknown emails | `send_friend_request` |
+| Global leaderboard is strictly opt-in: requires choosing a unique username (`^[a-z][a-z0-9_]{2,19}$`) and setting `showOnGlobal = true`. Inactive users (>7 days without a prayer log in local timezone) are omitted | `set_username`, `update_settings`, `get_global_leaderboard`, `app_private.is_user_active` |
+| Global leaderboard privacy: returns only username, points, streak, and viewer relationship. Never real names, emails, heatmaps, quran, nafl, or report data | `get_global_leaderboard` |
+| Add friend by tap: requests sent by user ID use `friend_requests.via = 'global'`. Target email is looked up server-side and never exposed. Incoming global requests show @username with email null | `send_friend_request_to_user`, `list_friend_requests` |
+| Blocking: mutual request deletion, blocker/blocked pair in `friend_blocks` (SELECT-only RLS), requests from blocked users return generic ok invisibly | `block_user`, `unblock_user`, `list_blocked`, `friend_blocks` |
 
 Helpers that take a user id (`points_between`, `user_today`, …) live in the `app_private` schema. PostgREST
 does not expose that schema, and clients have no `EXECUTE` on it, so nobody can call
@@ -147,6 +151,13 @@ does not expose that schema, and clients have no `EXECUTE` on it, so nobody can 
   Badge definitions live in a **migration** (production needs them). `seed.sql` repeats them idempotently.
 - **`app_private.now()`** wraps `now()`. Production uses the real clock. The SQL tests replace it inside a
   rolled-back transaction to simulate midnight, year boundaries and multi-day challenges.
+- **Global leaderboard migration (`20261113000001_global_leaderboard.sql`)**:
+  - **`profiles.username`**: nullable unique case-insensitively via `lower(username)` index, regex `^[a-z][a-z0-9_]{2,19}$`. Reserved names (`admin`, `support`, `zikr`, `namaz`, `moderator`, `system`) rejected.
+  - **`showOnGlobal` opt-in setting**: defaults to `false`. Trying to set `showOnGlobal = true` without a username raises `'Choose a username first'`.
+  - **Active status rule**: user must have logged at least one prayer in the last 7 days of their local timezone (`app_private.is_user_active`).
+  - **`friend_requests.via`**: `'email'` or `'global'` enum check. Tap-to-add on the global leaderboard resolves the target email server-side and stores `via = 'global'`, hiding emails and real names from incoming request lists.
+  - **`friend_blocks`**: blocker/blocked table with RLS (`blocker = auth.uid()` SELECT only, direct writes revoked). Blocking deletes pending friend requests in both directions. Outgoing requests to someone who blocked you return a generic success message invisibly without creating a row.
+  - **`get_global_leaderboard(p_period)`**: returns top 50 opted-in active users, plus `me` object with rank and points (in viewer's timezone). Never exposes email, real name, nafl, quran, heatmap, or reports.
 
 ---
 
