@@ -12,10 +12,10 @@ import { ErrorBoundary } from './ErrorBoundary.jsx';
 
 const NORMAL_TABS = [
   { to: '/', label: 'Today', icon: 'today', end: true },
-  { to: '/streak', label: 'Streak', icon: 'grid' },
+  { to: '/streak', label: 'Track', icon: 'grid' },
   { to: '/quran', label: 'Quran', icon: 'book' },
   { to: '/friends', label: 'Friends', icon: 'users' },
-  { to: '/profile', label: 'Profile', icon: 'user' },
+  { to: '/more', label: 'More', icon: 'more' },
 ];
 
 const RAMADAN_TABS = [
@@ -23,13 +23,25 @@ const RAMADAN_TABS = [
   { to: '/ramadan/map', label: '30 days', icon: 'calendar' },
   { to: '/quran', label: 'Quran', icon: 'book' },
   { to: '/friends', label: 'Friends', icon: 'users' },
-  { to: '/profile', label: 'Profile', icon: 'user' },
+  { to: '/more', label: 'More', icon: 'more' },
+];
+
+const MORE_ROUTES = [
+  '/more',
+  '/profile',
+  '/nafl',
+  '/history',
+  '/report',
+  '/badges',
+  '/challenges',
+  '/times',
 ];
 
 export function BottomNav() {
   const { ramadanActive } = useMode();
   const { user } = useAuth();
   const today = useToday();
+  const location = useLocation();
   const [dismissed, setDismissed] = useState(() => isGlobalAnnouncementDismissed());
 
   useEffect(() => {
@@ -48,19 +60,31 @@ export function BottomNav() {
     dismissed,
   });
 
+  const isMoreRoute = MORE_ROUTES.some(
+    (p) => location.pathname === p || location.pathname.startsWith(`${p}/`),
+  );
+
   const tabs = ramadanActive ? RAMADAN_TABS : NORMAL_TABS;
   return (
     <nav className="bottom-nav" aria-label="Main">
       <div className="bottom-nav__inner">
         {tabs.map((t) => {
           const showDot = t.to === '/friends' && showGlobalDot;
+          const isMoreTab = t.to === '/more';
+          const isActive = isMoreTab
+            ? isMoreRoute
+            : (t.end
+              ? location.pathname === t.to
+              : (location.pathname === t.to || (t.to !== '/' && location.pathname.startsWith(`${t.to}/`))));
+
           return (
             <NavLink
               key={t.to}
               to={t.to}
               end={t.end}
-              className="bottom-nav__link"
-              aria-label={showDot ? 'Friends, new feature' : undefined}
+              className={() => `bottom-nav__link ${isActive ? 'active' : ''}`}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={showDot ? `${t.label}, new feature` : undefined}
             >
               <span style={{ position: 'relative', display: 'inline-flex' }}>
                 <Icon name={t.icon} size={22} />

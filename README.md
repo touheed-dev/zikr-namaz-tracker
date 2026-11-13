@@ -24,6 +24,14 @@
 
 ## What's new
 
+### v1.2 — 14 Nov 2026: More tab and themes
+- Dedicated **More** tab (`/more`) organizing Profile & settings, Nafl, Log and edit, Weekly report, Badges, and Challenges
+- 7 calm, muted solid-colour palettes: Forest (default), Sage, Coffee, Slate, Plum, Terracotta, and Sand (light theme)
+- Strict WCAG AA contrast compliance (≥ 4.5:1) verified across all surfaces and tokens
+- Device-level theme persistence (`localStorage`) with dynamic browser `<meta name="theme-color">` updates
+- Real-time Theme picker with round swatches and live in-card preview in Profile
+- Active route highlighting on the More tab for all sub-pages
+
 ### v1.1 — 13 Nov 2026: Global leaderboard
 - Opt-in global leaderboard (off by default)
 - Public usernames (first name + numbers), no emails or real names shown
