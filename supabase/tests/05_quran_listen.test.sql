@@ -64,13 +64,49 @@ select tests.eq(
 reset role;
 
 -- -----------------------------------------------------------------------------
--- 3. Daily cap: seconds capped at 86400
+-- 3. Daily cap: seconds capped at 86400 & direct writes denied
 -- -----------------------------------------------------------------------------
 select tests.login(:'u1');
 set local role authenticated;
 
--- Force seconds near max to test cap
+-- Direct writes by client are denied
+select tests.throws(
+  $q$ insert into public.quran_listen_progress (user_id, reciter, surah, position_seconds) values (auth.uid(), 'Yasser Al-Dosari', 1, 0) $q$,
+  'permission denied',
+  'authenticated user denied direct insert on quran_listen_progress'
+);
+select tests.throws(
+  $q$ update public.quran_listen_progress set surah = 2 $q$,
+  'permission denied',
+  'authenticated user denied direct update on quran_listen_progress'
+);
+select tests.throws(
+  $q$ delete from public.quran_listen_progress $q$,
+  'permission denied',
+  'authenticated user denied direct delete on quran_listen_progress'
+);
+select tests.throws(
+  $q$ insert into public.quran_listen_logs (user_id, log_date, seconds) values (auth.uid(), '2026-11-14', 10) $q$,
+  'permission denied',
+  'authenticated user denied direct insert on quran_listen_logs'
+);
+select tests.throws(
+  $q$ update public.quran_listen_logs set seconds = 10 $q$,
+  'permission denied',
+  'authenticated user denied direct update on quran_listen_logs'
+);
+select tests.throws(
+  $q$ delete from public.quran_listen_logs $q$,
+  'permission denied',
+  'authenticated user denied direct delete on quran_listen_logs'
+);
+
+-- Force seconds near max to test cap (setup runs as superuser)
+reset role;
 update public.quran_listen_logs set seconds = 86350 where user_id = :'u1'::uuid and log_date = '2026-11-14';
+select tests.login(:'u1');
+set local role authenticated;
+
 select add_listen_seconds(100);
 
 select tests.eq(
@@ -84,13 +120,14 @@ reset role;
 -- -----------------------------------------------------------------------------
 -- 4. get_listen_summary: returns today, week, total, position, khatamSurah
 -- -----------------------------------------------------------------------------
-select tests.login(:'u1');
-set local role authenticated;
-
--- Reset logs to realistic values: today (Saturday) 180s, yesterday (Friday) 300s
+-- Reset logs to realistic values: today (Saturday) 180s, yesterday (Friday) 300s (setup runs as superuser)
+reset role;
 update public.quran_listen_logs set seconds = 180 where user_id = :'u1'::uuid and log_date = '2026-11-14';
 insert into public.quran_listen_logs (user_id, log_date, seconds)
 values (:'u1'::uuid, '2026-11-13', 300);
+
+select tests.login(:'u1');
+set local role authenticated;
 
 select tests.eq(
   get_listen_summary(),
@@ -151,19 +188,19 @@ set local role anon;
 
 select tests.throws(
   $q$ select set_listen_position('Yasser Al-Dosari', 1, 0) $q$,
-  null,
+  'permission denied',
   'anon denied set_listen_position'
 );
 
 select tests.throws(
   $q$ select add_listen_seconds(60) $q$,
-  null,
+  'permission denied',
   'anon denied add_listen_seconds'
 );
 
 select tests.throws(
   $q$ select get_listen_summary() $q$,
-  null,
+  'permission denied',
   'anon denied get_listen_summary'
 );
 
