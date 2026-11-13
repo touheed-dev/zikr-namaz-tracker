@@ -43,12 +43,13 @@ button:disabled { cursor: not-allowed; }
 .skip-link:focus { top: 12px; }
 
 /* ------------------------------------------------------------- layout */
-.app { min-height: 100vh; }
+.app { min-height: 100vh; --player-h: 0px; }
+.app--has-player { --player-h: 58px; }
 
 .page {
   max-width: 480px;
   margin: 0 auto;
-  padding: 20px var(--pad) calc(var(--nav-h) + 32px + env(safe-area-inset-bottom));
+  padding: 20px var(--pad) calc(var(--nav-h) + var(--player-h, 0px) + 32px + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -67,7 +68,7 @@ button:disabled { cursor: not-allowed; }
   }
   .page {
     max-width: 1120px;
-    padding: 32px 40px;
+    padding: 32px 40px calc(var(--player-h, 0px) + 32px);
   }
   .page--narrow {
     max-width: 760px;
