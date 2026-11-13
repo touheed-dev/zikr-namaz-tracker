@@ -1,36 +1,26 @@
-<div align="center">
-  <img src="web/public/icon.svg" width="96" alt="Zikr & Namaz Tracker logo" />
-  <h1>Zikr & Namaz Tracker</h1>
-  <p>A private-by-default habit tracker for Namaz, Zikr, Quran and nafl.</p>
+<p align="center"><img src="docs/banner.svg" width="100%" alt="Zikr & Namaz Tracker: a private habit tracker for Namaz, Zikr, Quran and nafl"></p>
 
-  <p>
-    <a href="https://github.com/touheed-dev/zikr-namaz-tracker/actions/workflows/ci.yml">
-      <img src="https://github.com/touheed-dev/zikr-namaz-tracker/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
-    </a>
-    <a href="https://zikr-namaz-tracker.vercel.app">
-      <img src="https://img.shields.io/badge/Live-zikr--namaz--tracker.vercel.app-10B981?style=flat&logo=vercel" alt="Live App" />
-    </a>
-    <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react" alt="React 18" />
-    <img src="https://img.shields.io/badge/Vite-5-646CFF?style=flat&logo=vite" alt="Vite 5" />
-    <img src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat&logo=supabase" alt="Supabase" />
-    <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql" alt="PostgreSQL 16" />
-    <img src="https://img.shields.io/badge/Vercel-Deployment-000000?style=flat&logo=vercel" alt="Vercel" />
-  </p>
+<p align="center">
+  <a href="https://github.com/touheed-dev/zikr-namaz-tracker/actions/workflows/ci.yml">
+    <img src="https://github.com/touheed-dev/zikr-namaz-tracker/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+  </a>
+  <a href="https://zikr-namaz-tracker.vercel.app">
+    <img src="https://img.shields.io/badge/Live-zikr--namaz--tracker.vercel.app-10B981?style=flat&logo=vercel" alt="Live App" />
+  </a>
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react" alt="React 18" />
+  <img src="https://img.shields.io/badge/Vite-5-646CFF?style=flat&logo=vite" alt="Vite 5" />
+  <img src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=flat&logo=supabase" alt="Supabase" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql" alt="PostgreSQL 16" />
+  <img src="https://img.shields.io/badge/Vercel-Deployment-000000?style=flat&logo=vercel" alt="Vercel" />
+</p>
 
-  <p>
-    <a href="https://zikr-namaz-tracker.vercel.app">Live app</a> ·
-    <a href="#whats-new">What's new</a> ·
-    <a href="#features">Features</a> ·
-    <a href="#run-locally">Run locally</a> ·
-    <a href="docs/ARCHITECTURE.md">Architecture</a>
-  </p>
-
-  <p>
-    <img src="docs/screenshots/today.png" width="300" alt="Zikr & Namaz Tracker Today Screen" />
-  </p>
-</div>
-
----
+<p align="center">
+  <a href="https://zikr-namaz-tracker.vercel.app">Live app</a> ·
+  <a href="#whats-new">What's new</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#run-locally">Run locally</a> ·
+  <a href="docs/ARCHITECTURE.md">Architecture</a>
+</p>
 
 ## What's new
 

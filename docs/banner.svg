@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" width="1280" height="320">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0E1B17" />
+      <stop offset="100%" stop-color="#1F4A3C" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0.5" y="0.5" width="1279" height="319" rx="28" fill="url(#bgGradient)" stroke="#2C4A41" stroke-width="1" />
+
+  <!-- Logo -->
+  <svg x="70" y="70" width="180" height="180" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="112" fill="#0A1612" stroke="#2C4A41" stroke-width="8" />
+    <path d="M332 150a120 120 0 1 0 0 212a150 150 0 1 1 0-212z" fill="#E9C46A" />
+    <g fill="#1A7F45">
+      <rect x="300" y="300" width="26" height="26" rx="5" />
+      <rect x="334" y="300" width="26" height="26" rx="5" />
+      <rect x="300" y="334" width="26" height="26" rx="5" />
+    </g>
+    <rect x="334" y="334" width="26" height="26" rx="5" fill="#8FD3A8" />
+  </svg>
+
+  <!-- Text block -->
+  <g transform="translate(290, 0)" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+    <text x="0" y="125" font-size="64" font-weight="700" fill="#F4EFE6">Zikr &amp; Namaz Tracker</text>
+    <text x="0" y="182" font-size="26" font-weight="400" fill="#A9BDB5">A private habit tracker for Namaz, Zikr, Quran and nafl</text>
+    <text x="0" y="230" font-size="20" font-weight="500" fill="#8FD3A8">Built with React · Supabase · Vercel</text>
+  </g>
+</svg>
