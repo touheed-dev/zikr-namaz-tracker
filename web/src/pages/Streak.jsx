@@ -45,36 +45,42 @@ export default function Streak() {
         {range !== '21' && <div className="tiny muted">One cell per day (Mon at top). Coloured when all five were prayed.</div>}
       </Card>
 
-      <div className="grid-3">
-        <div className="stat"><div className="stat__value stat__value--sm">{s ? s.streak : '—'}</div><div className="stat__label">Day streak</div></div>
-        <div className="stat"><div className="stat__value stat__value--sm">{s ? s.bestStreak : '—'}</div><div className="stat__label">Best streak</div></div>
-        <div className="stat"><div className="stat__value stat__value--sm">{s ? (s.jamaatPct === null ? '—' : `${s.jamaatPct}%`) : '—'}</div><div className="stat__label">In Jamaat (30 days)</div></div>
+      <div className="layout-2col">
+        <div className="layout-2col__left">
+          <div className="grid-3">
+            <div className="stat"><div className="stat__value stat__value--sm">{s ? s.streak : '—'}</div><div className="stat__label">Day streak</div></div>
+            <div className="stat"><div className="stat__value stat__value--sm">{s ? s.bestStreak : '—'}</div><div className="stat__label">Best streak</div></div>
+            <div className="stat"><div className="stat__value stat__value--sm">{s ? (s.jamaatPct === null ? '—' : `${s.jamaatPct}%`) : '—'}</div><div className="stat__label">In Jamaat (30 days)</div></div>
+          </div>
+          {summary.error && <ErrorState error={summary.error} onRetry={summary.reload} title="Could not load your stats" />}
+
+          <Card title="Zikr · morning + evening">
+            {zk.loading && <Skeleton height={24} />}
+            {!zk.loading && zk.error && <ErrorState error={zk.error} onRetry={zk.reload} />}
+            {!zk.loading && !zk.error && <ZikrHeatmap entries={zk.entries} endISO={today} days={21} today={today} />}
+            <div className="small muted">Light = one set done · Dark = both done</div>
+          </Card>
+        </div>
+
+        <div className="layout-2col__right">
+          <HadithCard screen="streak" />
+
+          <Card className="card--tight">
+            <nav aria-label="More" className="list">
+              {[
+                ['/history', 'Log and edit past days'],
+                ['/report', 'Weekly report'],
+                ['/badges', 'Badges'],
+              ].map(([to, label]) => (
+                <Link key={to} to={to} className="list-row" style={{ textDecoration: 'none' }}>
+                  <span className="grow">{label}</span>
+                  <Icon name="chevronRight" size={18} />
+                </Link>
+              ))}
+            </nav>
+          </Card>
+        </div>
       </div>
-      {summary.error && <ErrorState error={summary.error} onRetry={summary.reload} title="Could not load your stats" />}
-
-      <Card title="Zikr · morning + evening">
-        {zk.loading && <Skeleton height={24} />}
-        {!zk.loading && zk.error && <ErrorState error={zk.error} onRetry={zk.reload} />}
-        {!zk.loading && !zk.error && <ZikrHeatmap entries={zk.entries} endISO={today} days={21} today={today} />}
-        <div className="small muted">Light = one set done · Dark = both done</div>
-      </Card>
-
-      <HadithCard screen="streak" />
-
-      <Card className="card--tight">
-        <nav aria-label="More" className="list">
-          {[
-            ['/history', 'Log and edit past days'],
-            ['/report', 'Weekly report'],
-            ['/badges', 'Badges'],
-          ].map(([to, label]) => (
-            <Link key={to} to={to} className="list-row" style={{ textDecoration: 'none' }}>
-              <span className="grow">{label}</span>
-              <Icon name="chevronRight" size={18} />
-            </Link>
-          ))}
-        </nav>
-      </Card>
     </>
   );
 }

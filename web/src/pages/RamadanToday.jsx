@@ -101,67 +101,73 @@ export default function RamadanToday() {
 
       <GlobalAnnouncementCard />
 
-      <IftarCard times={times} timesError={timesError} now={now} />
+      <div className="layout-2col">
+        <div className="layout-2col__left">
+          <IftarCard times={times} timesError={timesError} now={now} />
 
-      {nf.error ? <ErrorState error={nf.error} onRetry={nf.reload} /> : (
-        <div className="grid-2">
-          <Tile label="Roza" sub={isDone('ramadan:roza') ? 'Fasting today' : 'Not marked'} done={isDone('ramadan:roza')} disabled={busy('ramadan:roza')} onClick={() => toggle('ramadan:roza')} />
-          <Tile label="Sehri dua" sub={isDone('ramadan:sehri') ? 'Done' : 'Not yet'} done={isDone('ramadan:sehri')} disabled={busy('ramadan:sehri')} onClick={() => toggle('ramadan:sehri')} />
-          <Link to="/quran" className={`tile ${pagesToday > 0 ? 'tile--done' : ''}`} aria-label={`Quran: para ${k.para}, ${pagesToday} pages today. Open Quran log`}>
-            <span className="row row--between" style={{ width: '100%' }}>
-              <span className="strong">Quran</span>
-              <span className="tile__check">{pagesToday > 0 && <Icon name="check" size={14} strokeWidth={3} />}</span>
-            </span>
-            <span className="small muted">Para {k.para} · {pagesToday ? `${paraLabel(pagesToday)} today` : 'log today'}</span>
-          </Link>
-          <Tile label="Iftar dua" sub={isDone('ramadan:iftar') ? 'Done' : times ? `At ${formatTime12(times.maghrib)}` : 'At Maghrib'} done={isDone('ramadan:iftar')} disabled={busy('ramadan:iftar')} onClick={() => toggle('ramadan:iftar')} />
-          <Tile label="Tahajjud" sub={isDone('tahajjud') ? 'Prayed' : 'Not yet'} done={isDone('tahajjud')} disabled={busy('tahajjud')} onClick={() => toggle('tahajjud')} />
-          <Tile label="Sadaqah" sub={isDone('ramadan:sadaqah') ? 'Given today' : 'Add today'} done={isDone('ramadan:sadaqah')} disabled={busy('ramadan:sadaqah')} onClick={() => toggle('ramadan:sadaqah')} />
-        </div>
-      )}
-
-      <Card title="Taraweeh tonight" aside={`${rakats} of 20 rakats`}>
-        <div className="blocks" role="group" aria-label="Taraweeh rakats">
-          {Array.from({ length: 10 }, (_, i) => (
-            <button
-              key={i}
-              type="button"
-              className={`block ${i < rakats / 2 ? 'block--on' : ''}`}
-              aria-label={`${(i + 1) * 2} rakats`}
-              aria-pressed={i < rakats / 2}
-              disabled={busy('ramadan:taraweeh')}
-              onClick={() => tapBlock(i)}
-            />
-          ))}
-        </div>
-        <div className="small muted">Each block = 2 rakats. Tap the last filled block to step back.</div>
-      </Card>
-
-      <Card title="Last 10 nights · odd nights">
-        <div className="nights">
-          {ODD_NIGHTS.map((n) => (
-            <div key={n} className={`night ${nightNow === n ? 'night--now' : ''}`} aria-current={nightNow === n ? 'date' : undefined}>
-              <div className="night__n">{n}</div>
-              <div className="tiny muted">night</div>
+          {nf.error ? <ErrorState error={nf.error} onRetry={nf.reload} /> : (
+            <div className="grid-2">
+              <Tile label="Roza" sub={isDone('ramadan:roza') ? 'Fasting today' : 'Not marked'} done={isDone('ramadan:roza')} disabled={busy('ramadan:roza')} onClick={() => toggle('ramadan:roza')} />
+              <Tile label="Sehri dua" sub={isDone('ramadan:sehri') ? 'Done' : 'Not yet'} done={isDone('ramadan:sehri')} disabled={busy('ramadan:sehri')} onClick={() => toggle('ramadan:sehri')} />
+              <Link to="/quran" className={`tile ${pagesToday > 0 ? 'tile--done' : ''}`} aria-label={`Quran: para ${k.para}, ${pagesToday} pages today. Open Quran log`}>
+                <span className="row row--between" style={{ width: '100%' }}>
+                  <span className="strong">Quran</span>
+                  <span className="tile__check">{pagesToday > 0 && <Icon name="check" size={14} strokeWidth={3} />}</span>
+                </span>
+                <span className="small muted">Para {k.para} · {pagesToday ? `${paraLabel(pagesToday)} today` : 'log today'}</span>
+              </Link>
+              <Tile label="Iftar dua" sub={isDone('ramadan:iftar') ? 'Done' : times ? `At ${formatTime12(times.maghrib)}` : 'At Maghrib'} done={isDone('ramadan:iftar')} disabled={busy('ramadan:iftar')} onClick={() => toggle('ramadan:iftar')} />
+              <Tile label="Tahajjud" sub={isDone('tahajjud') ? 'Prayed' : 'Not yet'} done={isDone('tahajjud')} disabled={busy('tahajjud')} onClick={() => toggle('tahajjud')} />
+              <Tile label="Sadaqah" sub={isDone('ramadan:sadaqah') ? 'Given today' : 'Add today'} done={isDone('ramadan:sadaqah')} disabled={busy('ramadan:sadaqah')} onClick={() => toggle('ramadan:sadaqah')} />
             </div>
-          ))}
+          )}
         </div>
-        <div className="small muted">
-          {day && day >= 20 ? 'Seek Laylatul Qadr in the odd nights.' : 'Starts on night 21. Seek Laylatul Qadr in the odd nights.'}
-        </div>
-      </Card>
 
-      <div className="grid-2">
-        <button type="button" className="btn btn--gold" disabled={busy('ramadan:roza') || isDone('ramadan:roza')} onClick={() => toggle('ramadan:roza')}>
-          {isDone('ramadan:roza') ? 'Roza marked' : 'Mark roza done'}
-        </button>
-        <button type="button" className="btn" disabled={busy('ramadan:sadaqah') || isDone('ramadan:sadaqah')} onClick={() => toggle('ramadan:sadaqah')}>
-          {isDone('ramadan:sadaqah') ? 'Sadaqah given' : 'Sadaqah +'}
-        </button>
+        <div className="layout-2col__right">
+          <Card title="Taraweeh tonight" aside={`${rakats} of 20 rakats`}>
+            <div className="blocks" role="group" aria-label="Taraweeh rakats">
+              {Array.from({ length: 10 }, (_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`block ${i < rakats / 2 ? 'block--on' : ''}`}
+                  aria-label={`${(i + 1) * 2} rakats`}
+                  aria-pressed={i < rakats / 2}
+                  disabled={busy('ramadan:taraweeh')}
+                  onClick={() => tapBlock(i)}
+                />
+              ))}
+            </div>
+            <div className="small muted">Each block = 2 rakats. Tap the last filled block to step back.</div>
+          </Card>
+
+          <Card title="Last 10 nights · odd nights">
+            <div className="nights">
+              {ODD_NIGHTS.map((n) => (
+                <div key={n} className={`night ${nightNow === n ? 'night--now' : ''}`} aria-current={nightNow === n ? 'date' : undefined}>
+                  <div className="night__n">{n}</div>
+                  <div className="tiny muted">night</div>
+                </div>
+              ))}
+            </div>
+            <div className="small muted">
+              {day && day >= 20 ? 'Seek Laylatul Qadr in the odd nights.' : 'Starts on night 21. Seek Laylatul Qadr in the odd nights.'}
+            </div>
+          </Card>
+
+          <div className="grid-2">
+            <button type="button" className="btn btn--gold" disabled={busy('ramadan:roza') || isDone('ramadan:roza')} onClick={() => toggle('ramadan:roza')}>
+              {isDone('ramadan:roza') ? 'Roza marked' : 'Mark roza done'}
+            </button>
+            <button type="button" className="btn" disabled={busy('ramadan:sadaqah') || isDone('ramadan:sadaqah')} onClick={() => toggle('ramadan:sadaqah')}>
+              {isDone('ramadan:sadaqah') ? 'Sadaqah given' : 'Sadaqah +'}
+            </button>
+          </div>
+
+          <div className="small muted center">Ramadan items are private and never shared. <Link to="/ramadan/map">See your 30-day map</Link></div>
+          <HadithCard screen="ramadan" />
+        </div>
       </div>
-
-      <div className="small muted center">Ramadan items are private and never shared. <Link to="/ramadan/map">See your 30-day map</Link></div>
-      <HadithCard screen="ramadan" />
     </>
   );
 }

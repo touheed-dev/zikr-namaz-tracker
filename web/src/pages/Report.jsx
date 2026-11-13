@@ -140,30 +140,32 @@ export default function Report() {
             </div>
           </Card>
 
-          <Card title="Day by day"><DayBars perDay={d.perDay} /></Card>
+          <div className="report-2col">
+            <Card title="Day by day"><DayBars perDay={d.perDay} /></Card>
 
-          <div className="grid-2">
-            <div className="stat">
-              <div className="stat__label">Strongest waqt</div>
-              <div className="stat__value stat__value--sm">{d.strongest ? PRAYER_LABELS[d.strongest.prayer] : '—'}</div>
-              <div className="stat__sub">{d.strongest ? `${d.strongest.jamaat} / 7 in Jamaat` : 'No Jamaat yet'}</div>
-            </div>
-            <div className="stat">
-              <div className="stat__label">Needs care</div>
-              <div className="stat__value stat__value--sm">{d.weakest ? PRAYER_LABELS[d.weakest.prayer] : '—'}</div>
-              <div className="stat__sub">{d.weakest ? `${d.weakest.jamaat} / 7 in Jamaat` : 'All even'}</div>
-            </div>
-            <div className="stat">
-              <div className="stat__label">Zikr</div>
-              <div className="stat__value stat__value--sm">{d.zikr.days} / 7 days</div>
-              <div className="stat__sub">
-                {d.zikr.missed ? `${d.zikr.missed === 'both' ? 'Azkar' : `${capitalize(d.zikr.missed)} azkar`} missed ${d.zikr.missedCount === 1 ? 'once' : `${d.zikr.missedCount} times`}` : 'Both, every day'}
+            <div className="grid-2">
+              <div className="stat">
+                <div className="stat__label">Strongest waqt</div>
+                <div className="stat__value stat__value--sm">{d.strongest ? PRAYER_LABELS[d.strongest.prayer] : '—'}</div>
+                <div className="stat__sub">{d.strongest ? `${d.strongest.jamaat} / 7 in Jamaat` : 'No Jamaat yet'}</div>
               </div>
-            </div>
-            <div className="stat">
-              <div className="stat__label">Quran</div>
-              <div className="stat__value stat__value--sm">{d.quran.pages} pages</div>
-              <div className="stat__sub">≈ {paraLabel(d.quran.pages)} · {d.quran.days} of 7 days</div>
+              <div className="stat">
+                <div className="stat__label">Needs care</div>
+                <div className="stat__value stat__value--sm">{d.weakest ? PRAYER_LABELS[d.weakest.prayer] : '—'}</div>
+                <div className="stat__sub">{d.weakest ? `${d.weakest.jamaat} / 7 in Jamaat` : 'All even'}</div>
+              </div>
+              <div className="stat">
+                <div className="stat__label">Zikr</div>
+                <div className="stat__value stat__value--sm">{d.zikr.days} / 7 days</div>
+                <div className="stat__sub">
+                  {d.zikr.missed ? `${d.zikr.missed === 'both' ? 'Azkar' : `${capitalize(d.zikr.missed)} azkar`} missed ${d.zikr.missedCount === 1 ? 'once' : `${d.zikr.missedCount} times`}` : 'Both, every day'}
+                </div>
+              </div>
+              <div className="stat">
+                <div className="stat__label">Quran</div>
+                <div className="stat__value stat__value--sm">{d.quran.pages} pages</div>
+                <div className="stat__sub">≈ {paraLabel(d.quran.pages)} · {d.quran.days} of 7 days</div>
+              </div>
             </div>
           </div>
 

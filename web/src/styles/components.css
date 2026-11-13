@@ -233,6 +233,12 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 .bottom-nav__inner { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); height: var(--nav-h); }
+@media (min-width: 768px) {
+  .bottom-nav__inner { max-width: 720px; }
+}
+@media (min-width: 1100px) {
+  .bottom-nav { display: none !important; }
+}
 .bottom-nav__link {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   color: var(--muted); text-decoration: none; font-size: 12px; font-weight: 500; min-height: 44px;
@@ -262,6 +268,14 @@
 /* --------------------------------------------------------------- toast */
 .toast-wrap { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom)); z-index: 50; display: flex; justify-content: center; pointer-events: none; padding: 0 16px; }
 .toast { pointer-events: auto; background: var(--text); color: var(--bg); border-radius: 12px; padding: 10px 14px; font-size: 14px; font-weight: 600; max-width: 440px; display: flex; gap: 10px; align-items: center; }
+@media (min-width: 1100px) {
+  .toast-wrap {
+    left: 240px;
+    right: 0;
+    bottom: 24px;
+    padding: 0 20px;
+  }
+}
 
 /* -------------------------------------------------------------- badges */
 .badge-card { background: var(--card); border-radius: var(--r-md); padding: 12px; display: flex; flex-direction: column; gap: 6px; min-height: 132px; }
@@ -399,6 +413,231 @@
   flex: 0 0 auto;
 }
 
+/* ------------------------------------------------------------- sidebar */
+.sidebar {
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 240px;
+    height: 100vh;
+    background: var(--card);
+    border-right: 1px solid var(--line-soft);
+    z-index: 30;
+    padding: 24px 16px 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+  }
+
+  .sidebar__brand-wrap {
+    margin-bottom: 24px;
+    padding: 0 8px;
+  }
+
+  .sidebar__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--text);
+  }
+
+  .sidebar__logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .sidebar__title {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 auto;
+  }
+
+  .sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: var(--r-sm);
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .sidebar__link:hover {
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+    color: var(--text);
+  }
+
+  .sidebar__link.active,
+  .sidebar__link[aria-current='page'] {
+    background: color-mix(in srgb, var(--light) 12%, transparent);
+    color: var(--light);
+    font-weight: 700;
+  }
+
+  .sidebar__link-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .sidebar__dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+
+  .sidebar__link-label {
+    flex: 1 1 auto;
+  }
+
+  .sidebar__footer {
+    padding-top: 16px;
+    border-top: 1px solid var(--line-soft);
+    margin-top: auto;
+  }
+
+  .sidebar__user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--r-sm);
+    text-decoration: none;
+    color: var(--text);
+    min-height: 44px;
+    transition: background-color 0.15s ease;
+  }
+
+  .sidebar__user:hover {
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+  }
+
+  .sidebar__user.active,
+  .sidebar__user[aria-current='page'] {
+    background: color-mix(in srgb, var(--light) 12%, transparent);
+  }
+
+  .sidebar__user-info {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .sidebar__user-name {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sidebar__user-sub {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* -------------------------------------------------------- layout-2col */
+.layout-2col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.layout-2col__left,
+.layout-2col__right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 1100px) {
+  .layout-2col {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+  .layout-2col__left,
+  .layout-2col__right {
+    gap: 20px;
+  }
+}
+
+/* ------------------------------------------------------- profile grid */
+.profile-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 1100px) {
+  .profile-grid {
+    display: block;
+    columns: 2;
+    column-gap: 20px;
+  }
+  .profile-grid > * {
+    break-inside: avoid;
+    margin-bottom: 20px;
+  }
+}
+
+/* -------------------------------------------------------- report 2col */
+.report-2col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 1100px) {
+  .report-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+}
+
+/* -------------------------------------------------------- badges grid */
+@media (min-width: 1100px) {
+  .badges-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+  }
+}
+
 /* --------------------------------------------------- quran audio player */
 .quran-mini-player {
   position: fixed;
@@ -501,6 +740,25 @@
 }
 .quran-mini-player__btn--close:hover {
   color: var(--text);
+}
+
+@media (min-width: 768px) {
+  .quran-mini-player__bar {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .quran-mini-player {
+    left: 240px;
+    right: 0;
+    bottom: 0;
+    z-index: 25;
+  }
+  .quran-mini-player__bar {
+    max-width: 1120px;
+    border-radius: var(--r-md) var(--r-md) 0 0;
+  }
 }
 
 /* Surah list items */
