@@ -162,6 +162,36 @@ select tests.eq(
 reset role;
 
 -- -----------------------------------------------------------------------------
+-- 4b. get_listen_summary timezone check: log on user_today() when UTC date differs
+-- -----------------------------------------------------------------------------
+-- User in 'Asia/Kolkata' (+05:30).
+-- At 2026-11-14 20:00:00+00 (UTC date is 2026-11-14),
+-- in Asia/Kolkata it is already 2026-11-15 01:30:00+05:30 (user_today is 2026-11-15).
+reset role;
+select tests.new_user('listen_tz@test.dev', 'Listen TZ User', 'Asia/Kolkata') as u_tz \gset
+select tests.set_clock('2026-11-14 20:00:00+00');
+
+select tests.login(:'u_tz');
+set local role authenticated;
+
+select add_listen_seconds(150);
+
+select tests.eq(
+  (get_listen_summary() ->> 'today')::int,
+  150,
+  'log on user_today appears in today total when UTC date differs'
+);
+
+select tests.eq(
+  (get_listen_summary() ->> 'week')::int,
+  150,
+  'log on user_today appears in week total when UTC date differs'
+);
+
+reset role;
+select tests.set_clock('2026-11-14 12:00:00+00');
+
+-- -----------------------------------------------------------------------------
 -- 5. Privacy: User A cannot read User B's listening rows
 -- -----------------------------------------------------------------------------
 select tests.login(:'u2');

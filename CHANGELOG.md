@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-11-14
+
+### Fixed
+- Rewind on resume: 3s rewind on resume after pause, 5s rewind on resume khatam / app reload, and proportional duration-fraction mapping with 5s rewind when switching reciters mid-surah.
+- Reliable listening time tracking: accurate accumulation of real played seconds (ignoring seeks), 30s interval flushing, and automatic flushes on pause, track end, surah change, reciter change, visibility change (hidden), and pagehide.
+- Fixed 0s listening time display bug caused by accessing `.seconds` on numeric summary values, with immediate refresh after flushes.
+- Ayah-based Khatam listening progress: calculated proportionally across total Quran ayahs (6,236) using `assets/surahs.js` with 1-decimal precision under 10%.
+
 ## [1.3.0] - 2026-11-14
 
 ### Added
