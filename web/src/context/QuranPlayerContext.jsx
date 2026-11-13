@@ -1,11 +1,15 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext.jsx';
+import { useToast } from './ToastContext.jsx';
 import { quranListen } from '../api/index.js';
 import { SURAHS } from '../assets/surahs.js';
 import {
   fetchReciters,
   getAudioUrl,
   DEFAULT_RECITER_ID,
+  REWIND_SECONDS,
+  rewindPosition,
+  mapAcrossReciters,
 } from '../utils/quranAudio.js';
 import { getItem, setItem } from '../utils/storage.js';
 
@@ -15,6 +19,8 @@ const RECITER_STORAGE_KEY = 'zn_quran_reciter';
 
 export function QuranPlayerProvider({ children }) {
   const { status } = useAuth();
+  const toast = useToast();
+
   const audioRef = useRef(null);
 
   const [reciters, setReciters] = useState([]);
@@ -37,8 +43,19 @@ export function QuranPlayerProvider({ children }) {
   const [summaryLoading, setSummaryLoading] = useState(false);
 
   // References to track flush state across renders
-  const pendingSecondsRef = useRef(0);
-  const lastSavedPosRef = useRef(0);
+  const lastPlayTimestampRef = useRef(null);
+  const unflushedSecondsRef = useRef(0);
+  const isFlushingRef = useRef(false);
+
+  const lastSavedPosTimeRef = useRef(0);
+  const lastSavedPosValRef = useRef(-1);
+  const isSavingPosRef = useRef(false);
+
+  const lastToastTimeRef = useRef(0);
+
+  const pendingReciterChangeRef = useRef(null);
+  const pendingInitialSeekRef = useRef(null);
+
   const currentSurahRef = useRef(currentSurah);
   currentSurahRef.current = currentSurah;
   const modeRef = useRef(mode);
@@ -48,13 +65,35 @@ export function QuranPlayerProvider({ children }) {
   const isPlayingRef = useRef(isPlaying);
   isPlayingRef.current = isPlaying;
 
+  const notifyListenError = useCallback((msg = "Couldn't save listening time") => {
+    const now = Date.now();
+    if (now - lastToastTimeRef.current > 10000) {
+      lastToastTimeRef.current = now;
+      if (toast && typeof toast.show === 'function') {
+        toast.show(msg, { tone: 'error' });
+      }
+    }
+  }, [toast]);
+
+  const capturePlayedTime = useCallback(() => {
+    if (lastPlayTimestampRef.current != null) {
+      const now = Date.now();
+      const elapsedSec = (now - lastPlayTimestampRef.current) / 1000;
+      lastPlayTimestampRef.current = now;
+      if (elapsedSec > 0) {
+        // Discard impossible leaps (e.g. laptop wake from long sleep)
+        const valid = Math.min(elapsedSec, 35);
+        unflushedSecondsRef.current += valid;
+      }
+    }
+  }, []);
+
   const loadReciters = useCallback(async () => {
     setRecitersLoading(true);
     setRecitersError(null);
     try {
       const list = await fetchReciters();
       setReciters(list);
-      // If selected reciter is not in list, fallback to default or first
       if (list.length > 0) {
         setSelectedReciterIdState((cur) => {
           const match = list.find((r) => r.id === cur);
@@ -78,8 +117,8 @@ export function QuranPlayerProvider({ children }) {
     try {
       const data = await quranListen.summary();
       setSummary(data);
-    } catch {
-      // Non-blocking error
+    } catch (err) {
+      console.error('Failed to load listen summary:', err);
     } finally {
       setSummaryLoading(false);
     }
@@ -98,35 +137,73 @@ export function QuranPlayerProvider({ children }) {
     setItem(RECITER_STORAGE_KEY, id);
   }, []);
 
-  // Flush pending seconds to database
+  // Flush pending seconds to database in chunks of <= 300
   const flushSeconds = useCallback(async () => {
     if (status !== 'signedIn') {
-      pendingSecondsRef.current = 0;
       return;
     }
-    const toFlush = Math.min(pendingSecondsRef.current, 300);
-    if (toFlush <= 0) return;
+    capturePlayedTime();
+    if (isFlushingRef.current) return;
 
-    pendingSecondsRef.current -= toFlush;
+    const totalWhole = Math.floor(unflushedSecondsRef.current);
+    if (totalWhole < 1) return;
+
+    isFlushingRef.current = true;
+    let anySuccess = false;
+
     try {
-      await quranListen.addSeconds(toFlush);
-      loadSummary();
-    } catch {
-      // On failure, return back to pending
-      pendingSecondsRef.current += toFlush;
-    }
-  }, [status, loadSummary]);
+      while (Math.floor(unflushedSecondsRef.current) >= 1) {
+        const chunk = Math.min(Math.floor(unflushedSecondsRef.current), 300);
+        if (chunk < 1) break;
 
-  // Save current position for khatam mode
-  const savePosition = useCallback(async (surah, pos) => {
+        unflushedSecondsRef.current -= chunk;
+        try {
+          await quranListen.addSeconds(chunk);
+          anySuccess = true;
+        } catch (err) {
+          unflushedSecondsRef.current += chunk;
+          throw err;
+        }
+      }
+    } catch (err) {
+      console.error('Failed to save listen seconds:', err);
+      notifyListenError("Couldn't save listening time");
+    } finally {
+      isFlushingRef.current = false;
+      if (anySuccess) {
+        loadSummary();
+      }
+    }
+  }, [status, capturePlayedTime, loadSummary, notifyListenError]);
+
+  // Save current position for khatam mode (throttled)
+  const savePosition = useCallback(async (surah, pos, force = false) => {
     if (status !== 'signedIn' || !surah || !selectedReciter) return;
-    try {
-      await quranListen.setPosition(selectedReciter.displayName, surah, Math.floor(pos));
-      lastSavedPosRef.current = pos;
-    } catch {
-      // Non-blocking
+    if (modeRef.current !== 'khatam') return;
+
+    const now = Date.now();
+    const roundedPos = Math.max(0, Math.floor(pos));
+
+    if (!force) {
+      if (now - lastSavedPosTimeRef.current < 10000 && Math.abs(roundedPos - lastSavedPosValRef.current) < 5) {
+        return;
+      }
     }
-  }, [status, selectedReciter]);
+
+    if (isSavingPosRef.current) return;
+    isSavingPosRef.current = true;
+
+    try {
+      await quranListen.setPosition(selectedReciter.displayName, surah, roundedPos);
+      lastSavedPosTimeRef.current = now;
+      lastSavedPosValRef.current = roundedPos;
+    } catch (err) {
+      console.error('Failed to save listen position:', err);
+      notifyListenError("Couldn't save listening time");
+    } finally {
+      isSavingPosRef.current = false;
+    }
+  }, [status, selectedReciter, notifyListenError]);
 
   // Main play function
   const playSurah = useCallback((surahNumber, options = {}) => {
@@ -147,6 +224,15 @@ export function QuranPlayerProvider({ children }) {
       return false;
     }
 
+    // Flush and save position on surah change
+    if (currentSurahRef.current && currentSurahRef.current !== num) {
+      capturePlayedTime();
+      flushSeconds();
+      if (modeRef.current === 'khatam') {
+        savePosition(currentSurahRef.current, currentTimeRef.current, true);
+      }
+    }
+
     const nextMode = options.mode || (modeRef.current || 'single');
     setMode(nextMode);
     modeRef.current = nextMode;
@@ -162,14 +248,20 @@ export function QuranPlayerProvider({ children }) {
     setCurrentSurah(num);
 
     const initialPos = Math.max(0, options.position || 0);
+    pendingReciterChangeRef.current = null;
+    pendingInitialSeekRef.current = initialPos;
 
     if (audioRef.current) {
-      audioRef.current.src = audioUrl;
-      audioRef.current.currentTime = initialPos;
+      if (audioRef.current.src !== audioUrl) {
+        audioRef.current.src = audioUrl;
+        audioRef.current.load();
+      } else {
+        audioRef.current.currentTime = initialPos;
+        pendingInitialSeekRef.current = null;
+      }
       audioRef.current.play().then(() => {
         setIsPlaying(true);
       }).catch((err) => {
-        // User-interaction / autoplay block or network error
         if (err.name !== 'AbortError') {
           setAudioError('Playback failed. Tap play to start.');
         }
@@ -178,27 +270,41 @@ export function QuranPlayerProvider({ children }) {
     }
 
     if (nextMode === 'khatam' && status === 'signedIn') {
-      savePosition(num, initialPos);
+      savePosition(num, initialPos, true);
     }
 
     return true;
-  }, [reciters, selectedReciter, savePosition, status]);
+  }, [reciters, selectedReciter, savePosition, status, capturePlayedTime, flushSeconds]);
 
   const pause = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
     }
+    capturePlayedTime();
+    lastPlayTimestampRef.current = null;
     setIsPlaying(false);
     flushSeconds();
     if (modeRef.current === 'khatam' && currentSurahRef.current) {
-      savePosition(currentSurahRef.current, currentTimeRef.current);
+      savePosition(currentSurahRef.current, currentTimeRef.current, true);
     }
-  }, [flushSeconds, savePosition]);
+  }, [capturePlayedTime, flushSeconds, savePosition]);
 
   const resume = useCallback(() => {
     if (audioRef.current && currentSurahRef.current) {
-      audioRef.current.play().catch(() => {
-        setAudioError('Could not resume audio');
+      const cur = audioRef.current.currentTime || currentTimeRef.current || 0;
+      const target = rewindPosition(cur, REWIND_SECONDS.PAUSE);
+      try {
+        audioRef.current.currentTime = target;
+      } catch (err) {
+        console.error('Failed to set rewind currentTime on resume:', err);
+      }
+      setCurrentTime(target);
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch((err) => {
+        if (err.name !== 'AbortError') {
+          setAudioError('Could not resume audio');
+        }
       });
     }
   }, []);
@@ -241,23 +347,54 @@ export function QuranPlayerProvider({ children }) {
     const pos = summary?.position;
     const targetSurah = pos?.surah || 1;
     const targetSeconds = pos?.position_seconds || 0;
-    playSurah(targetSurah, { mode: 'khatam', position: targetSeconds });
+    const targetPos = rewindPosition(targetSeconds, REWIND_SECONDS.RESUME_SAVED);
+    playSurah(targetSurah, { mode: 'khatam', position: targetPos });
   }, [summary, playSurah]);
 
-  // Switch reciter while playing if needed
+  // Reciter change mid-surah: map by fraction, wait for loadedmetadata before seeking
   const handleReciterChange = useCallback((newReciterId) => {
     setSelectedReciterId(newReciterId);
-    if (currentSurahRef.current && isPlayingRef.current) {
-      const newRec = reciters.find((r) => r.id === newReciterId);
-      if (newRec && (!newRec.surahSet || newRec.surahSet.has(currentSurahRef.current))) {
-        playSurah(currentSurahRef.current, {
-          reciterId: newReciterId,
-          position: currentTimeRef.current,
-          mode: modeRef.current,
-        });
-      }
+    const curSurah = currentSurahRef.current;
+    if (!curSurah) return;
+
+    capturePlayedTime();
+    flushSeconds();
+    if (modeRef.current === 'khatam') {
+      savePosition(curSurah, currentTimeRef.current, true);
     }
-  }, [setSelectedReciterId, reciters, playSurah]);
+
+    const newRec = reciters.find((r) => r.id === newReciterId);
+    if (!newRec) return;
+
+    if (newRec.surahSet && !newRec.surahSet.has(curSurah)) {
+      setAudioError(`Surah ${curSurah} is not available for ${newRec.displayName}`);
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+      setIsPlaying(false);
+      return;
+    }
+
+    const oldPos = audioRef.current ? audioRef.current.currentTime : currentTimeRef.current;
+    const oldDur = (audioRef.current && audioRef.current.duration && !isNaN(audioRef.current.duration))
+      ? audioRef.current.duration
+      : (duration || 0);
+    const wasPlaying = isPlayingRef.current;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+
+    pendingReciterChangeRef.current = { oldPos, oldDur, wasPlaying };
+    setAudioLoading(true);
+    setAudioError(null);
+
+    const audioUrl = getAudioUrl(newRec.server, curSurah);
+    if (audioRef.current && audioUrl) {
+      audioRef.current.src = audioUrl;
+      audioRef.current.load();
+    }
+  }, [setSelectedReciterId, reciters, duration, capturePlayedTime, flushSeconds, savePosition]);
 
   // Audio element event listeners
   const onTimeUpdate = () => {
@@ -265,71 +402,123 @@ export function QuranPlayerProvider({ children }) {
     const cur = audioRef.current.currentTime;
     setCurrentTime(cur);
 
-    // Save khatam position every 15 seconds
-    if (modeRef.current === 'khatam' && currentSurahRef.current && isPlayingRef.current) {
-      if (Math.abs(cur - lastSavedPosRef.current) >= 15) {
-        savePosition(currentSurahRef.current, cur);
+    if (!audioRef.current.paused && !audioRef.current.seeking) {
+      capturePlayedTime();
+      if (unflushedSecondsRef.current >= 30) {
+        flushSeconds();
       }
+    }
+
+    if (modeRef.current === 'khatam' && currentSurahRef.current && isPlayingRef.current) {
+      savePosition(currentSurahRef.current, cur, false);
     }
   };
 
   const onLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration || 0);
-    }
+    if (!audioRef.current) return;
+    const newDur = audioRef.current.duration || 0;
+    setDuration(newDur);
     setAudioLoading(false);
+
+    if (pendingReciterChangeRef.current) {
+      const { oldPos, oldDur, wasPlaying } = pendingReciterChangeRef.current;
+      pendingReciterChangeRef.current = null;
+      const newPos = mapAcrossReciters(oldPos, oldDur, newDur, REWIND_SECONDS.RECITER_CHANGE);
+      try {
+        audioRef.current.currentTime = newPos;
+      } catch (e) {
+        console.error('Failed to seek new reciter position:', e);
+      }
+      setCurrentTime(newPos);
+      if (modeRef.current === 'khatam' && currentSurahRef.current) {
+        savePosition(currentSurahRef.current, newPos, true);
+      }
+      if (wasPlaying) {
+        audioRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch((err) => {
+          if (err.name !== 'AbortError') {
+            setAudioError('Playback failed. Tap play to start.');
+          }
+          setIsPlaying(false);
+        });
+      }
+    } else if (pendingInitialSeekRef.current != null) {
+      const pos = pendingInitialSeekRef.current;
+      pendingInitialSeekRef.current = null;
+      try {
+        audioRef.current.currentTime = pos;
+      } catch (e) {
+        console.error('Failed to seek initial position:', e);
+      }
+      setCurrentTime(pos);
+    }
   };
 
   const onEnded = () => {
+    capturePlayedTime();
+    lastPlayTimestampRef.current = null;
+    setIsPlaying(false);
     flushSeconds();
     if (modeRef.current === 'khatam' && currentSurahRef.current) {
       if (currentSurahRef.current < 114) {
         const nextSurah = currentSurahRef.current + 1;
-        savePosition(nextSurah, 0);
+        savePosition(nextSurah, 0, true);
         playSurah(nextSurah, { mode: 'khatam', position: 0 });
         return;
       }
+      savePosition(114, duration || currentTimeRef.current, true);
     }
-    setIsPlaying(false);
     setCurrentTime(0);
   };
 
-  // 1-second interval for tracking listening time
+  // Periodic flush & position save check every second while playing
   useEffect(() => {
-    if (!isPlaying) return;
-
     const interval = setInterval(() => {
-      const isVisible = typeof document !== 'undefined' && document.visibilityState === 'visible';
-      const isMediaSessionPlaying =
-        typeof navigator !== 'undefined' &&
-        'mediaSession' in navigator &&
-        navigator.mediaSession.playbackState === 'playing';
-
-      if (isVisible || isMediaSessionPlaying) {
-        pendingSecondsRef.current += 1;
-      }
-
-      if (pendingSecondsRef.current >= 60) {
-        flushSeconds();
+      if (isPlayingRef.current) {
+        capturePlayedTime();
+        if (unflushedSecondsRef.current >= 30) {
+          flushSeconds();
+        }
+        if (modeRef.current === 'khatam' && currentSurahRef.current) {
+          savePosition(currentSurahRef.current, currentTimeRef.current, false);
+        }
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isPlaying, flushSeconds]);
+  }, [capturePlayedTime, flushSeconds, savePosition]);
 
-  // Flush on unload
+  // Flush on visibility change (hidden) and pagehide / beforeunload
   useEffect(() => {
-    const handleUnload = () => {
-      if (isPlayingRef.current) {
-        if (modeRef.current === 'khatam' && currentSurahRef.current) {
-          savePosition(currentSurahRef.current, currentTimeRef.current);
-        }
-        flushSeconds();
+    const handleHiddenOrLeave = () => {
+      capturePlayedTime();
+      flushSeconds();
+      if (modeRef.current === 'khatam' && currentSurahRef.current) {
+        savePosition(currentSurahRef.current, currentTimeRef.current, true);
       }
     };
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
-  }, [savePosition, flushSeconds]);
+
+    const onVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        handleHiddenOrLeave();
+      } else if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        if (audioRef.current && !audioRef.current.paused) {
+          lastPlayTimestampRef.current = Date.now();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', handleHiddenOrLeave);
+    window.addEventListener('beforeunload', handleHiddenOrLeave);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', handleHiddenOrLeave);
+      window.removeEventListener('beforeunload', handleHiddenOrLeave);
+    };
+  }, [capturePlayedTime, flushSeconds, savePosition]);
 
   // Media Session API integration
   useEffect(() => {
@@ -423,14 +612,37 @@ export function QuranPlayerProvider({ children }) {
       <audio
         ref={audioRef}
         preload="metadata"
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        onPlaying={() => {
+          lastPlayTimestampRef.current = Date.now();
+          setIsPlaying(true);
+          setAudioLoading(false);
+        }}
+        onPause={() => {
+          capturePlayedTime();
+          lastPlayTimestampRef.current = null;
+          setIsPlaying(false);
+        }}
+        onWaiting={() => {
+          capturePlayedTime();
+          lastPlayTimestampRef.current = null;
+          setAudioLoading(true);
+        }}
+        onSeeking={() => {
+          capturePlayedTime();
+          lastPlayTimestampRef.current = null;
+        }}
+        onSeeked={() => {
+          if (audioRef.current && !audioRef.current.paused) {
+            lastPlayTimestampRef.current = Date.now();
+          }
+        }}
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={onLoadedMetadata}
-        onWaiting={() => setAudioLoading(true)}
         onCanPlay={() => setAudioLoading(false)}
         onEnded={onEnded}
         onError={() => {
+          capturePlayedTime();
+          lastPlayTimestampRef.current = null;
           setAudioLoading(false);
           setIsPlaying(false);
           setAudioError('Failed to stream audio from mp3quran.net');

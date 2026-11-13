@@ -18,7 +18,7 @@ import {
 import { PageHead } from '../components/layout/AppShell.jsx';
 import { addDays, startOfWeek, daysBetween, isoWeekday } from '../utils/dates.js';
 import { paraLabel, khatamProgress } from '../utils/points.js';
-import { formatListenDuration } from '../utils/quranAudio.js';
+import { formatListenDuration, calculateKhatamProgress } from '../utils/quranAudio.js';
 import { SURAHS } from '../assets/surahs.js';
 import { useToast } from '../context/ToastContext.jsx';
 
@@ -105,7 +105,17 @@ export default function Quran() {
 
   const khatamSurahNum = player.summary?.position?.surah || 1;
   const khatamSurahObj = SURAHS.find((item) => item.n === khatamSurahNum) || SURAHS[0];
-  const isKhatamPlaying = player.isPlaying && player.mode === 'khatam';
+  const isKhatamActive = player.currentSurah === khatamSurahNum && player.mode === 'khatam';
+  const isKhatamPlaying = player.isPlaying && isKhatamActive;
+
+  const currentPos = isKhatamActive
+    ? player.currentTime
+    : (player.summary?.position?.position_seconds || 0);
+  const currentDur = isKhatamActive && player.duration > 0 ? player.duration : 0;
+
+  const khatamProg = useMemo(() => {
+    return calculateKhatamProgress(khatamSurahNum, currentPos, currentDur);
+  }, [khatamSurahNum, currentPos, currentDur]);
 
   if (qr.loading) {
     return (
@@ -240,10 +250,18 @@ export default function Quran() {
             <div className="grow small">
               <div>
                 <span className="strong">Listened today:</span>{' '}
-                {formatListenDuration(player.summary?.today?.seconds || 0)}
+                {formatListenDuration(
+                  typeof player.summary?.today === 'number'
+                    ? player.summary.today
+                    : player.summary?.today?.seconds || 0,
+                )}
                 <span className="muted"> · </span>
                 <span className="strong">This week:</span>{' '}
-                {formatListenDuration(player.summary?.week?.seconds || 0)}
+                {formatListenDuration(
+                  typeof player.summary?.week === 'number'
+                    ? player.summary.week
+                    : player.summary?.week?.seconds || 0,
+                )}
               </div>
               <div className="tiny muted" style={{ marginTop: 2 }}>
                 Private to you. Listening never gives leaderboard points and never marks pages as read.
@@ -287,13 +305,13 @@ export default function Quran() {
           {/* Continue my Khatam Card */}
           <Card title="Continue my khatam" aside={`Surah ${khatamSurahNum} / 114`}>
             <ProgressBar
-              value={khatamSurahNum}
-              max={114}
+              value={khatamProg.percent}
+              max={100}
               label="Khatam listening progress"
             />
             <div className="small muted row row--between">
               <span>{khatamSurahObj.en} ({khatamSurahObj.ar})</span>
-              <span>{Math.round((khatamSurahNum / 114) * 100)}%</span>
+              <span>{khatamProg.formattedPercent}</span>
             </div>
             <button
               type="button"
@@ -301,6 +319,8 @@ export default function Quran() {
               onClick={() => {
                 if (isKhatamPlaying) {
                   player.togglePlay();
+                } else if (isKhatamActive && player.currentTime > 0) {
+                  player.resume();
                 } else {
                   player.resumeKhatam();
                 }
@@ -310,7 +330,7 @@ export default function Quran() {
               <span>
                 {isKhatamPlaying
                   ? 'Pause khatam'
-                  : player.summary?.position?.position_seconds > 0
+                  : player.summary?.position?.position_seconds > 0 || (isKhatamActive && player.currentTime > 0)
                   ? `Resume Khatam (${khatamSurahObj.en})`
                   : `Start Khatam (${khatamSurahObj.en})`}
               </span>

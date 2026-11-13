@@ -1,8 +1,99 @@
 import { getJSON, setJSON } from './storage.js';
+import { SURAHS } from '../assets/surahs.js';
 
 export const RECITERS_CACHE_KEY = 'zn_mp3quran_reciters_v1';
 export const CACHE_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const DEFAULT_RECITER_ID = 'yasser_dosari';
+
+export const REWIND_SECONDS = {
+  PAUSE: 3,
+  RESUME_SAVED: 5,
+  RECITER_CHANGE: 5,
+};
+
+export const TOTAL_AYAH_COUNT = 6236;
+
+/**
+ * Rewinds a playback position by a fixed amount of seconds, clamped to >= 0.
+ */
+export function rewindPosition(position, seconds = 0) {
+  const pos = Math.max(0, Number(position) || 0);
+  const sec = Math.max(0, Number(seconds) || 0);
+  return Math.max(0, pos - sec);
+}
+
+/**
+ * Maps playback position across different reciters based on relative duration.
+ * newPos = (oldPos / oldDuration) * newDuration - 5s, clamped >= 0.
+ * If oldDuration unknown or <= 0, uses oldPos - 5s, clamped >= 0.
+ */
+export function mapAcrossReciters(
+  oldPos,
+  oldDuration,
+  newDuration,
+  rewindSec = REWIND_SECONDS.RECITER_CHANGE,
+) {
+  const pos = Math.max(0, Number(oldPos) || 0);
+  const oldDur = Number(oldDuration) || 0;
+  const newDur = Number(newDuration) || 0;
+  const rewind = Math.max(0, Number(rewindSec) || 0);
+
+  if (oldDur > 0 && newDur > 0) {
+    const fraction = pos / oldDur;
+    return Math.max(0, fraction * newDur - rewind);
+  }
+
+  return Math.max(0, pos - rewind);
+}
+
+/**
+ * Formats Khatam percentage: shows 1 decimal place under 10%, whole number otherwise.
+ * Clamped 0% to 100%.
+ */
+export function formatKhatamPercent(percent) {
+  const p = Math.max(0, Math.min(100, Number(percent) || 0));
+  if (p === 0) return '0%';
+  if (p >= 100) return '100%';
+  if (p < 10) {
+    const formatted = p.toFixed(1);
+    if (formatted === '10.0') return '10%';
+    if (formatted === '0.0') return '0%';
+    return `${formatted}%`;
+  }
+  return `${Math.round(p)}%`;
+}
+
+/**
+ * Computes Khatam listening progress percentage based on ayahs completed.
+ * Formula: (ayahs of completed surahs + ayahs of current surah * (position / duration)) / 6236
+ */
+export function calculateKhatamProgress(surahNumber = 1, positionSeconds = 0, durationSeconds = 0) {
+  const surah = Math.max(1, Math.min(114, Math.floor(Number(surahNumber) || 1)));
+  const pos = Math.max(0, Number(positionSeconds) || 0);
+  const dur = Math.max(0, Number(durationSeconds) || 0);
+
+  let completedAyahs = 0;
+  for (let i = 0; i < surah - 1; i++) {
+    completedAyahs += SURAHS[i]?.ayahs || 0;
+  }
+
+  const currentSurahObj = SURAHS[surah - 1];
+  const currentAyahs = currentSurahObj?.ayahs || 0;
+
+  const currentSurahFraction = dur > 0 ? Math.min(1, pos / dur) : 0;
+  const currentAyahsDone = currentAyahs * currentSurahFraction;
+  const totalAyahsDone = completedAyahs + currentAyahsDone;
+
+  const fraction = Math.min(1, Math.max(0, totalAyahsDone / TOTAL_AYAH_COUNT));
+  const percent = fraction * 100;
+
+  return {
+    fraction,
+    percent,
+    completedAyahs: Math.round(totalAyahsDone),
+    formattedPercent: formatKhatamPercent(percent),
+  };
+}
 
 export const CURATED_RECITERS = [
   {

@@ -84,6 +84,16 @@ export const quranListen = {
     return rpc('add_listen_seconds', { p_seconds: s });
   },
   async summary() {
-    return rpc('get_listen_summary');
+    const raw = await rpc('get_listen_summary');
+    if (!raw) return null;
+    const today = typeof raw.today === 'number' ? raw.today : (raw.today?.seconds ?? 0);
+    const week = typeof raw.week === 'number' ? raw.week : (raw.week?.seconds ?? 0);
+    const total = typeof raw.total === 'number' ? raw.total : (raw.total?.seconds ?? 0);
+    return {
+      ...raw,
+      today,
+      week,
+      total,
+    };
   },
 };
