@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from 'react';
 import { Icon } from './Icon.jsx';
 
 export { Icon };
+export { QuranMiniPlayer } from './QuranMiniPlayer.jsx';
 
 export function Card({ title, aside, children, className = '', as: Tag = 'section', ...rest }) {
   return (
