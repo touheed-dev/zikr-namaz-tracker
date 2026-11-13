@@ -328,6 +328,26 @@ export function QuranPlayerProvider({ children }) {
     }
   }, [duration, savePosition]);
 
+  const seekBy = useCallback((delta) => {
+    if (audioRef.current) {
+      const cur = audioRef.current.currentTime ?? currentTimeRef.current ?? 0;
+      const target = Math.max(0, Math.min(duration || 0, cur + delta));
+      seekTo(target);
+    }
+  }, [duration, seekTo]);
+
+  const nextSurah = useCallback(() => {
+    if (currentSurahRef.current && currentSurahRef.current < 114) {
+      playSurah(currentSurahRef.current + 1, { mode: modeRef.current, position: 0 });
+    }
+  }, [playSurah]);
+
+  const previousSurah = useCallback(() => {
+    if (currentSurahRef.current && currentSurahRef.current > 1) {
+      playSurah(currentSurahRef.current - 1, { mode: modeRef.current, position: 0 });
+    }
+  }, [playSurah]);
+
   const closePlayer = useCallback(() => {
     pause();
     if (audioRef.current) {
@@ -538,25 +558,33 @@ export function QuranPlayerProvider({ children }) {
 
       navigator.mediaSession.setActionHandler('play', () => resume());
       navigator.mediaSession.setActionHandler('pause', () => pause());
-      navigator.mediaSession.setActionHandler('previoustrack', () => {
-        if (currentSurah > 1) {
-          playSurah(currentSurah - 1, { mode, position: 0 });
-        }
-      });
-      navigator.mediaSession.setActionHandler('nexttrack', () => {
-        if (currentSurah < 114) {
-          playSurah(currentSurah + 1, { mode, position: 0 });
-        }
-      });
+      navigator.mediaSession.setActionHandler('previoustrack', () => previousSurah());
+      navigator.mediaSession.setActionHandler('nexttrack', () => nextSurah());
       navigator.mediaSession.setActionHandler('seekto', (details) => {
         if (details.seekTime != null) {
           seekTo(details.seekTime);
         }
       });
+      try {
+        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+          const offset = details.seekOffset || 10;
+          seekBy(-offset);
+        });
+      } catch {
+        /* unsupported action handler in some browsers */
+      }
+      try {
+        navigator.mediaSession.setActionHandler('seekforward', (details) => {
+          const offset = details.seekOffset || 10;
+          seekBy(offset);
+        });
+      } catch {
+        /* unsupported action handler in some browsers */
+      }
     } else {
       navigator.mediaSession.playbackState = 'none';
     }
-  }, [currentSurah, isPlaying, selectedReciter, mode, resume, pause, playSurah, seekTo]);
+  }, [currentSurah, isPlaying, selectedReciter, resume, pause, previousSurah, nextSurah, seekTo, seekBy]);
 
   // Position state for media session
   useEffect(() => {
@@ -601,6 +629,9 @@ export function QuranPlayerProvider({ children }) {
     resume,
     togglePlay,
     seekTo,
+    seekBy,
+    nextSurah,
+    previousSurah,
     closePlayer,
     resumeKhatam,
   };

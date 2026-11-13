@@ -667,13 +667,37 @@
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
   overflow: hidden;
 }
+.quran-mini-player__track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--line-soft);
+  cursor: pointer;
+}
 .quran-mini-player__progress {
   position: absolute;
   top: 0;
   left: 0;
-  height: 2px;
+  height: 100%;
   background: var(--gold);
-  transition: width 0.2s linear;
+  transition: width 0.15s linear;
+  pointer-events: none;
+}
+.quran-mini-player__seeker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+.quran-mini-player__seeker:focus-visible {
+  opacity: 1;
 }
 .quran-mini-player__info {
   display: flex;
@@ -839,4 +863,163 @@
   background: var(--light);
   color: var(--light-text);
   border-color: var(--light);
+}
+
+/* ---------------------------------------------------- now playing sheet */
+.now-playing {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 0;
+}
+.now-playing__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--inset);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.now-playing__titles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+}
+.now-playing__ar {
+  font-family: var(--font-ar);
+  font-size: 32px;
+  color: var(--text);
+  line-height: 1.4;
+}
+.now-playing__en {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+.now-playing__reciter {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.now-playing__seek {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.now-playing__slider {
+  width: 100%;
+  height: 6px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+.now-playing__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 4px;
+}
+.now-playing__btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.now-playing__btn:hover:not(:disabled) {
+  background: var(--card-deep);
+  border-color: var(--light);
+}
+.now-playing__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.now-playing__play-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  background: var(--light);
+  color: var(--light-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+.now-playing__play-btn:active {
+  transform: scale(0.95);
+}
+.now-playing__play-btn:disabled {
+  opacity: 0.6;
+}
+
+/* ---------------------------------------------------- quran accordion */
+.quran-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quran-accordion__item {
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+.quran-accordion__item--open {
+  border-color: var(--line);
+}
+.quran-accordion__header {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+  font-family: inherit;
+}
+.quran-accordion__header:hover {
+  background: var(--inset);
+}
+.quran-accordion__title {
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.quran-accordion__ar {
+  font-family: var(--font-ar);
+  font-size: 18px;
+  color: var(--muted);
+}
+.quran-accordion__content {
+  padding: 10px 12px 14px;
+  border-top: 1px solid var(--line-soft);
+  background: var(--bg);
+}
+.chip--xs {
+  font-size: 11px;
+  padding: 2px 8px;
+  min-height: 20px;
 }
