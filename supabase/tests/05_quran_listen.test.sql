@@ -24,18 +24,18 @@ select tests.throws($q$ select set_listen_position('Yasser Al-Dosari', 1, 43200)
 
 select set_listen_position('Yasser Al-Dosari', 18, 125.5);
 select tests.eq(
-  (select jsonb_build_object('surah', surah, 'pos', position_seconds, 'reciter', reciter)
+  (select jsonb_build_object('surah', surah::int, 'pos', position_seconds::numeric, 'reciter', reciter::text)
    from public.quran_listen_progress where user_id = :'u1'::uuid),
-  jsonb_build_object('surah', 18, 'pos', 125.5, 'reciter', 'Yasser Al-Dosari'),
+  jsonb_build_object('surah', 18, 'pos', 125.5::numeric, 'reciter', 'Yasser Al-Dosari'::text),
   'set_listen_position upserts progress'
 );
 
 -- Update same user's progress
 select set_listen_position('Mishary Rashid Alafasy', 19, 45.0);
 select tests.eq(
-  (select jsonb_build_object('surah', surah, 'pos', position_seconds, 'reciter', reciter)
+  (select jsonb_build_object('surah', surah::int, 'pos', position_seconds::numeric, 'reciter', reciter::text)
    from public.quran_listen_progress where user_id = :'u1'::uuid),
-  jsonb_build_object('surah', 19, 'pos', 45.0, 'reciter', 'Mishary Rashid Alafasy'),
+  jsonb_build_object('surah', 19, 'pos', 45.0::numeric, 'reciter', 'Mishary Rashid Alafasy'::text),
   'set_listen_position updates existing progress'
 );
 
@@ -56,7 +56,7 @@ select add_listen_seconds(60);
 select add_listen_seconds(120);
 
 select tests.eq(
-  (select seconds from public.quran_listen_logs where user_id = :'u1'::uuid and log_date = '2026-11-14'),
+  (select seconds from public.quran_listen_logs where user_id = :'u1'::uuid and log_date = '2026-11-14')::int,
   180,
   'add_listen_seconds accumulates seconds for today'
 );
@@ -110,7 +110,7 @@ set local role authenticated;
 select add_listen_seconds(100);
 
 select tests.eq(
-  (select seconds from public.quran_listen_logs where user_id = :'u1'::uuid and log_date = '2026-11-14'),
+  (select seconds from public.quran_listen_logs where user_id = :'u1'::uuid and log_date = '2026-11-14')::int,
   86400,
   'daily listening seconds capped at 86400'
 );
@@ -135,7 +135,7 @@ select tests.eq(
     'today', 180,
     'week', 480,
     'total', 480,
-    'position', jsonb_build_object('reciter', 'Mishary Rashid Alafasy', 'surah', 19, 'position_seconds', 45.0),
+    'position', jsonb_build_object('reciter', 'Mishary Rashid Alafasy'::text, 'surah', 19, 'position_seconds', 45.0::numeric),
     'khatamSurah', 18
   ),
   'get_listen_summary returns correct metrics and khatamSurah'
@@ -168,13 +168,13 @@ select tests.login(:'u2');
 set local role authenticated;
 
 select tests.eq(
-  (select count(*) from public.quran_listen_progress where user_id = :'u1'::uuid),
+  (select count(*) from public.quran_listen_progress where user_id = :'u1'::uuid)::int,
   0,
   'RLS prevents user 2 from reading user 1 listen progress'
 );
 
 select tests.eq(
-  (select count(*) from public.quran_listen_logs where user_id = :'u1'::uuid),
+  (select count(*) from public.quran_listen_logs where user_id = :'u1'::uuid)::int,
   0,
   'RLS prevents user 2 from reading user 1 listen logs'
 );
@@ -241,7 +241,7 @@ select tests.eq(
 );
 
 select tests.eq(
-  jsonb_array_length(export_my_data() -> 'listenLogs'),
+  jsonb_array_length(export_my_data() -> 'listenLogs')::int,
   2,
   'export_my_data has both listenLogs entries'
 );
@@ -257,13 +257,13 @@ set local role authenticated;
 
 -- Ensure user is on friends leaderboard
 select tests.eq(
-  (select points from public.get_leaderboard('week') where is_me = true),
+  (select points from public.get_leaderboard('week') where is_me = true)::int,
   0,
   'user 1 has 0 leaderboard points before/after listening'
 );
 
 select tests.eq(
-  (select count(*) from public.quran_logs where user_id = :'u1'::uuid),
+  (select count(*) from public.quran_logs where user_id = :'u1'::uuid)::int,
   0,
   'listening does not create quran_logs (reading) rows'
 );
