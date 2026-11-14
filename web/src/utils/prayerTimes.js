@@ -48,13 +48,46 @@ export const ISHA_ENDS = [
 
 export function normalizeMethod(m) {
   if (typeof m === 'number') {
-    const map = { 1: 'karachi', 2: 'isna', 3: 'mwl', 4: 'umm_al_qura', 5: 'egyptian' };
+    const map = { 1: 'karachi', 2: 'isna', 3: 'mwl', 4: 'umm_al_qura', 5: 'egyptian', 7: 'karachi' };
     return map[m] || 'karachi';
   }
   if (!m) return 'karachi';
   const str = String(m).toLowerCase().trim();
+  const numMap = { '1': 'karachi', '2': 'isna', '3': 'mwl', '4': 'umm_al_qura', '5': 'egyptian', '7': 'karachi' };
+  if (numMap[str]) return numMap[str];
   if (str === 'ummalqura') return 'umm_al_qura';
-  return str;
+  const validMethods = ['karachi', 'mwl', 'isna', 'umm_al_qura', 'egyptian', 'dubai', 'singapore'];
+  if (validMethods.includes(str)) return str;
+  return 'karachi';
+}
+
+export function normalizeMadhab(val) {
+  if (val == null || val === '') return null;
+  if (typeof val === 'number') {
+    return val === 1 ? 'hanafi' : (val === 0 ? 'shafi' : null);
+  }
+  const str = String(val).toLowerCase().trim();
+  if (str === 'shafi' || str === 'standard' || str === '0') return 'shafi';
+  if (str === 'hanafi' || str === '1') return 'hanafi';
+  return null;
+}
+
+export function normalizeIshaEnd(val) {
+  if (val == null || val === '') return null;
+  const str = String(val).toLowerCase().trim();
+  if (str === 'midnight') return 'midnight';
+  if (str === 'fajr') return 'fajr';
+  return null;
+}
+
+export function normalizeHighLat(val) {
+  if (!val) return null;
+  const str = String(val).toLowerCase().trim();
+  if (str === 'middleofthenight' || str === 'middle_of_the_night') return 'middleofthenight';
+  if (str === 'seventhofthenight' || str === 'seventh_of_the_night') return 'seventhofthenight';
+  if (str === 'twilightangle' || str === 'twilight_angle') return 'twilightangle';
+  if (str === 'none') return 'none';
+  return null;
 }
 
 export function getMethodParams(methodId) {
@@ -79,24 +112,18 @@ export function getMethodParams(methodId) {
 }
 
 export function getMadhab(madhab, asr) {
-  const norm = String(madhab || asr || '').toLowerCase().trim();
-  if (norm === 'shafi' || norm === 'standard') {
-    return Madhab.Shafi;
-  }
-  return Madhab.Hanafi; // default Hanafi
+  const norm = normalizeMadhab(madhab) || normalizeMadhab(asr) || 'hanafi';
+  return norm === 'shafi' ? Madhab.Shafi : Madhab.Hanafi;
 }
 
 export function getHighLatitudeRule(rule) {
-  const norm = String(rule || '').toLowerCase().trim();
+  const norm = normalizeHighLat(rule);
   switch (norm) {
     case 'middleofthenight':
-    case 'middle_of_the_night':
       return HighLatitudeRule.MiddleOfTheNight;
     case 'seventhofthenight':
-    case 'seventh_of_the_night':
       return HighLatitudeRule.SeventhOfTheNight;
     case 'twilightangle':
-    case 'twilight_angle':
       return HighLatitudeRule.TwilightAngle;
     default:
       return null;
@@ -202,32 +229,103 @@ export function dateToHHMM(date, timeZone) {
   return `${h}:${m}`;
 }
 
-export function calculatePrayerTimes(opts = {}) {
-  const cachedConfig = getCachedPrayerConfig();
-  const dateISO = opts.dateISO || new Date().toISOString().slice(0, 10);
+export function getCachedPrayerConfig() {
+  try {
+    const val = getJSON(CONFIG_CACHE_KEY, null);
+    if (!val || typeof val !== 'object') return null;
+    if (val.lat != null && isNaN(Number(val.lat))) return null;
+    if (val.lng != null && isNaN(Number(val.lng))) return null;
+    return val;
+  } catch {
+    return null;
+  }
+}
 
-  let rawLat = opts.lat ?? cachedConfig?.lat;
+export function setCachedPrayerConfig(config) {
+  if (!config || typeof config !== 'object') return;
+  try {
+    setJSON(CONFIG_CACHE_KEY, config);
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+/**
+ * Derives the single effective prayer calculation configuration.
+ * Precedence: settings.madhab -> legacy settings.asr (mapped) -> cachedConfig -> default 'hanafi'.
+ * Same pattern for method (legacy numeric IDs) and ishaEnd.
+ */
+export function getPrayerConfig(settings, cached) {
+  const s = settings || {};
+  const c = cached !== undefined ? (cached || {}) : (getCachedPrayerConfig() || {});
+
+  // madhab: settings.madhab -> legacy settings.asr -> cached.madhab -> legacy cached.asr -> default 'hanafi'
+  const madhab =
+    normalizeMadhab(s.madhab) ??
+    normalizeMadhab(s.asr) ??
+    normalizeMadhab(c?.madhab) ??
+    normalizeMadhab(c?.asr) ??
+    'hanafi';
+
+  // method: settings.method -> cached.method -> default 'karachi'
+  const method =
+    (s.method != null ? normalizeMethod(s.method) : null) ??
+    (c?.method != null ? normalizeMethod(c.method) : null) ??
+    'karachi';
+
+  // ishaEnd: settings.ishaEnd -> cached.ishaEnd -> default 'fajr'
+  const ishaEnd =
+    normalizeIshaEnd(s.ishaEnd) ??
+    normalizeIshaEnd(c?.ishaEnd) ??
+    'fajr';
+
+  // highLat: settings.highLat -> cached.highLat -> default 'none'
+  const highLat =
+    normalizeHighLat(s.highLat) ??
+    normalizeHighLat(c?.highLat) ??
+    'none';
+
+  // lat & lng
+  let rawLat = s.lat ?? c?.lat;
   if (rawLat == null || isNaN(Number(rawLat))) rawLat = DEFAULT_COORDINATES.lat;
   const lat = Number(rawLat);
 
-  let rawLng = opts.lng ?? cachedConfig?.lng;
+  let rawLng = s.lng ?? c?.lng;
   if (rawLng == null || isNaN(Number(rawLng))) rawLng = DEFAULT_COORDINATES.lng;
   const lng = Number(rawLng);
 
-  const method = opts.method ?? cachedConfig?.method ?? 'karachi';
-  const madhab = opts.madhab ?? cachedConfig?.madhab ?? opts.asr ?? 'hanafi';
-  const highLat = opts.highLat ?? cachedConfig?.highLat ?? 'none';
-  const ishaEnd = opts.ishaEnd ?? cachedConfig?.ishaEnd ?? 'fajr';
+  const hasCustomLocation = (s.lat != null && s.lng != null) || (c?.lat != null && c?.lng != null);
+
+  let locationLabel = s.locationLabel || c?.locationLabel;
+  if (!locationLabel) {
+    locationLabel = hasCustomLocation ? `${lat}°, ${lng}°` : DEFAULT_COORDINATES.label;
+  }
+
+  return {
+    lat,
+    lng,
+    locationLabel,
+    hasCustomLocation,
+    method,
+    madhab,
+    highLat,
+    ishaEnd,
+  };
+}
+
+export function calculatePrayerTimes(opts = {}) {
+  const config = getPrayerConfig(opts);
+  const dateISO = opts.dateISO || new Date().toISOString().slice(0, 10);
   const timeZone = opts.timeZone;
 
   const [y, m, d] = dateISO.split('-').map(Number);
   const date = new Date(y, m - 1, d);
-  const coords = new Coordinates(lat, lng);
-  const params = getMethodParams(method);
+  const coords = new Coordinates(config.lat, config.lng);
+  const params = getMethodParams(config.method);
 
-  params.madhab = getMadhab(madhab, opts.asr);
+  params.madhab = getMadhab(config.madhab);
 
-  const highLatRule = getHighLatitudeRule(highLat);
+  const highLatRule = getHighLatitudeRule(config.highLat);
   if (highLatRule) {
     params.highLatitudeRule = highLatRule;
   }
@@ -237,7 +335,7 @@ export function calculatePrayerTimes(opts = {}) {
 
   const fajrStr = dateToHHMM(pt.fajr, timeZone);
   const midnightStr = dateToHHMM(sunnah.middleOfTheNight, timeZone);
-  const ishaEndStr = ishaEnd === 'midnight' ? midnightStr : fajrStr;
+  const ishaEndStr = config.ishaEnd === 'midnight' ? midnightStr : fajrStr;
 
   return {
     fajr: fajrStr,
@@ -261,31 +359,9 @@ export function calculatePrayerTimes(opts = {}) {
 }
 
 function cacheKey(opts = {}) {
-  const normMethod = normalizeMethod(opts.method);
-  const lat = opts.lat ?? DEFAULT_COORDINATES.lat;
-  const lng = opts.lng ?? DEFAULT_COORDINATES.lng;
-  return `${CACHE_PREFIX}${opts.dateISO}:${lat}:${lng}:${normMethod}:${opts.madhab || opts.asr || 'hanafi'}:${opts.highLat || 'none'}:${opts.ishaEnd || 'fajr'}`;
-}
-
-export function getCachedPrayerConfig() {
-  try {
-    const val = getJSON(CONFIG_CACHE_KEY, null);
-    if (!val || typeof val !== 'object') return null;
-    if (val.lat != null && isNaN(Number(val.lat))) return null;
-    if (val.lng != null && isNaN(Number(val.lng))) return null;
-    return val;
-  } catch {
-    return null;
-  }
-}
-
-export function setCachedPrayerConfig(config) {
-  if (!config || typeof config !== 'object') return;
-  try {
-    setJSON(CONFIG_CACHE_KEY, config);
-  } catch {
-    /* ignore storage errors */
-  }
+  const config = getPrayerConfig(opts);
+  const dateISO = opts.dateISO || '';
+  return `${CACHE_PREFIX}${dateISO}:${config.lat}:${config.lng}:${config.method}:${config.madhab}:${config.highLat}:${config.ishaEnd}`;
 }
 
 /**
@@ -393,6 +469,17 @@ export function formatTime12(input) {
   h %= 12;
   if (h === 0) h = 12;
   return `${h}:${String(m).padStart(2, '0')} ${suffix}`;
+}
+
+/**
+ * Compact 12-hour time format without am/pm suffix, e.g. "5:29", "12:24", "4:24".
+ * Returns "--:--" for invalid or missing input.
+ */
+export function formatTimeCompact(input) {
+  if (input == null || input === '' || input === '--:--') return '--:--';
+  const str = formatTime12(input);
+  if (str === '--:--') return '--:--';
+  return str.replace(/\s*(am|pm)$/i, '');
 }
 
 /** Minutes from `now` (a Date) until hh:mm or target time today. Negative if past. */

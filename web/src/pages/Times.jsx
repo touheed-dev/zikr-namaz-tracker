@@ -11,8 +11,10 @@ import {
   getCurrentLocation,
   getCurrentAndNextPrayer,
   formatTime12,
+  formatTimeCompact,
   formatLiveCountdown,
   setCachedPrayerConfig,
+  getPrayerConfig,
   CALCULATION_METHODS,
   MADHABS,
   HIGH_LATITUDE_RULES,
@@ -26,16 +28,8 @@ export default function Times() {
   const now = useNow(1000);
   const toast = useToast();
 
-  const s = user?.settings || {};
-  const lat = s.lat ?? DEFAULT_COORDINATES.lat;
-  const lng = s.lng ?? DEFAULT_COORDINATES.lng;
-  const hasCustomLocation = s.lat != null && s.lng != null;
-  const locationLabel = s.locationLabel || (hasCustomLocation ? `${lat}°, ${lng}°` : DEFAULT_COORDINATES.label);
-
-  const method = s.method || 'karachi';
-  const madhab = s.madhab || s.asr || 'hanafi';
-  const highLat = s.highLat || 'none';
-  const ishaEnd = s.ishaEnd || 'fajr';
+  const config = getPrayerConfig(user?.settings);
+  const { lat, lng, locationLabel, hasCustomLocation, method, madhab, highLat, ishaEnd } = config;
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -120,7 +114,7 @@ export default function Times() {
       lng: city.lng,
       locationLabel: city.label,
       city: city.name,
-      country: city.country || s.country || 'India',
+      country: city.country || user?.settings?.country || 'India',
       ...(city.timezone ? { timezone: city.timezone } : {}),
     });
     toast.show(`Location set: ${city.label}`);
@@ -169,18 +163,16 @@ export default function Times() {
 
   return (
     <>
-      <PageHead title="Prayer times" />
-
-      <header className="page-head">
-        <div>
-          <div className="small muted">Daily timetable & offline calculation</div>
-          <h1>Prayer times</h1>
-        </div>
-        <div className="chip chip--light">
-          <Icon name="compass" size={14} />
-          <span>{locationLabel}</span>
-        </div>
-      </header>
+      <PageHead
+        title="Prayer times"
+        sub="Daily timetable & offline calculation"
+        aside={
+          <div className="chip chip--light">
+            <Icon name="compass" size={14} />
+            <span>{locationLabel}</span>
+          </div>
+        }
+      />
 
       {!hasCustomLocation && (
         <div className="card card--deep mb-12">
@@ -293,19 +285,19 @@ export default function Times() {
                         </div>
                         <div className="tiny muted">{formatShort(row.dateISO)}</div>
                       </td>
-                      <td>{formatTime12(row.times.fajr)}</td>
-                      <td className="muted">{formatTime12(row.times.sunrise)}</td>
-                      <td>{formatTime12(row.times.dhuhr)}</td>
-                      <td>{formatTime12(row.times.asr)}</td>
-                      <td>{formatTime12(row.times.maghrib)}</td>
-                      <td>{formatTime12(row.times.isha)}</td>
+                      <td>{formatTimeCompact(row.times.fajr)}</td>
+                      <td className="muted">{formatTimeCompact(row.times.sunrise)}</td>
+                      <td>{formatTimeCompact(row.times.dhuhr)}</td>
+                      <td>{formatTimeCompact(row.times.asr)}</td>
+                      <td>{formatTimeCompact(row.times.maghrib)}</td>
+                      <td>{formatTimeCompact(row.times.isha)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             <div className="tiny muted center mt-8">
-              All prayer times are computed on-device and remain accessible completely offline.
+              Times are shown in 12-hour format without am/pm. All prayer times are computed on-device and remain accessible completely offline.
             </div>
           </Card>
         </div>
@@ -417,7 +409,7 @@ export default function Times() {
                 <div className="field__label" id="madhab-label">
                   Asr madhab (School of thought)
                 </div>
-                <div className="row" role="group" aria-labelledby="madhab-label" style={{ gap: 6 }}>
+                <div className="row row--wrap" role="group" aria-labelledby="madhab-label" style={{ gap: 6 }}>
                   {MADHABS.map((m) => (
                     <button
                       key={m.id}
@@ -462,7 +454,7 @@ export default function Times() {
                 <div className="field__label" id="isha-end-label">
                   Isha end time
                 </div>
-                <div className="row" role="group" aria-labelledby="isha-end-label" style={{ gap: 6 }}>
+                <div className="row row--wrap" role="group" aria-labelledby="isha-end-label" style={{ gap: 6 }}>
                   {ISHA_ENDS.map((e) => (
                     <button
                       key={e.id}

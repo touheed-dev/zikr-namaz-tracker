@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   calculatePrayerTimes,
+  getPrayerConfig,
+  formatTimeCompact,
   CALCULATION_METHODS,
   MADHABS,
   HIGH_LATITUDE_RULES,
@@ -93,6 +95,101 @@ test('Hanafi Asr is strictly later than Shafi Asr', () => {
     const hanafiTotal = hanafiH * 60 + hanafiM;
     assert.ok(hanafiTotal > shafiTotal, 'Hanafi Asr HH:mm is later than Shafi Asr');
   }
+});
+
+test('Mumbai 2026-11-14 Karachi Asr ranges and default Hanafi', () => {
+  const baseOpts = {
+    dateISO: '2026-11-14',
+    lat: 19.08,
+    lng: 72.88,
+    method: 'karachi',
+    timeZone: 'Asia/Kolkata',
+  };
+
+  const hanafi = calculatePrayerTimes({ ...baseOpts, madhab: 'hanafi' });
+  const shafi = calculatePrayerTimes({ ...baseOpts, madhab: 'shafi' });
+  const def = calculatePrayerTimes(baseOpts);
+
+  // Hanafi Asr between 16:20 and 16:35 local (Asia/Kolkata)
+  const [hH, hM] = hanafi.asr.split(':').map(Number);
+  const hanafiMins = hH * 60 + hM;
+  assert.ok(
+    hanafiMins >= 16 * 60 + 20 && hanafiMins <= 16 * 60 + 35,
+    `Hanafi Asr ${hanafi.asr} must be between 16:20 and 16:35`,
+  );
+
+  // Shafi Asr between 15:30 and 15:45 local (Asia/Kolkata)
+  const [sH, sM] = shafi.asr.split(':').map(Number);
+  const shafiMins = sH * 60 + sM;
+  assert.ok(
+    shafiMins >= 15 * 60 + 30 && shafiMins <= 15 * 60 + 45,
+    `Shafi Asr ${shafi.asr} must be between 15:30 and 15:45`,
+  );
+
+  // Default config gives Hanafi
+  assert.equal(def.asr, hanafi.asr, 'Default config gives Hanafi Asr');
+  assert.ok(
+    hanafiMins > shafiMins,
+    'Hanafi Asr is strictly later than Shafi Asr',
+  );
+});
+
+test('getPrayerConfig resolves precedence and maps legacy values', () => {
+  // Empty / undefined settings defaults to Hanafi, Karachi, Fajr, none
+  const empty = getPrayerConfig({}, {});
+  assert.equal(empty.madhab, 'hanafi');
+  assert.equal(empty.method, 'karachi');
+  assert.equal(empty.ishaEnd, 'fajr');
+  assert.equal(empty.highLat, 'none');
+  assert.equal(empty.lat, 19.08);
+  assert.equal(empty.lng, 72.88);
+
+  // Legacy asr: 'standard' maps to 'shafi'
+  const legacyStandard = getPrayerConfig({ asr: 'standard' }, {});
+  assert.equal(legacyStandard.madhab, 'shafi');
+
+  // Legacy asr: 0 maps to 'shafi'
+  const legacyZero = getPrayerConfig({ asr: 0 }, {});
+  assert.equal(legacyZero.madhab, 'shafi');
+
+  // Legacy asr: 1 maps to 'hanafi'
+  const legacyOne = getPrayerConfig({ asr: 1 }, {});
+  assert.equal(legacyOne.madhab, 'hanafi');
+
+  // settings.madhab takes precedence over legacy settings.asr
+  const precedence = getPrayerConfig({ madhab: 'hanafi', asr: 'standard' }, {});
+  assert.equal(precedence.madhab, 'hanafi');
+
+  const precedenceShafi = getPrayerConfig({ madhab: 'shafi', asr: 'hanafi' }, {});
+  assert.equal(precedenceShafi.madhab, 'shafi');
+
+  // Legacy numeric method IDs
+  assert.equal(getPrayerConfig({ method: 1 }, {}).method, 'karachi');
+  assert.equal(getPrayerConfig({ method: 2 }, {}).method, 'isna');
+  assert.equal(getPrayerConfig({ method: 3 }, {}).method, 'mwl');
+  assert.equal(getPrayerConfig({ method: 4 }, {}).method, 'umm_al_qura');
+  assert.equal(getPrayerConfig({ method: 5 }, {}).method, 'egyptian');
+  assert.equal(getPrayerConfig({ method: '1' }, {}).method, 'karachi');
+
+  // ishaEnd
+  assert.equal(getPrayerConfig({ ishaEnd: 'midnight' }, {}).ishaEnd, 'midnight');
+  assert.equal(getPrayerConfig({ ishaEnd: 'fajr' }, {}).ishaEnd, 'fajr');
+  assert.equal(getPrayerConfig({ ishaEnd: 'invalid' }, {}).ishaEnd, 'fajr');
+
+  // cachedConfig fallback
+  const cachedFallback = getPrayerConfig({}, { madhab: 'shafi', method: 'isna' });
+  assert.equal(cachedFallback.madhab, 'shafi');
+  assert.equal(cachedFallback.method, 'isna');
+});
+
+test('formatTimeCompact produces 12-hour string without am/pm', () => {
+  assert.equal(formatTimeCompact('05:29'), '5:29');
+  assert.equal(formatTimeCompact('16:24'), '4:24');
+  assert.equal(formatTimeCompact('12:24'), '12:24');
+  assert.equal(formatTimeCompact('00:15'), '12:15');
+  assert.equal(formatTimeCompact('--:--'), '--:--');
+  assert.equal(formatTimeCompact(null), '--:--');
+  assert.equal(formatTimeCompact(undefined), '--:--');
 });
 
 test('switching calculation method changes Fajr and Isha times', () => {
