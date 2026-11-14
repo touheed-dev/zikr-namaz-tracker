@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { PageHead } from '../components/layout/AppShell.jsx';
 import { Card } from '../components/ui/index.jsx';
+import { formatReleaseDate } from '../utils/dates.js';
 import {
   RELEASES,
   getUnseenReleases,
@@ -57,7 +58,7 @@ export default function WhatsNew() {
                     </span>
                   )}
                 </div>
-                <span className="small muted">{rel.date}</span>
+                <span className="small muted">{formatReleaseDate(rel.date)}</span>
               </div>
 
               <div className="strong" style={{ fontSize: 15, marginBottom: 8 }}>
