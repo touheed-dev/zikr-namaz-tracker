@@ -18,12 +18,13 @@ const Profile = lazy(() => import('./pages/Profile.jsx'));
 const RamadanMap = lazy(() => import('./pages/RamadanMap.jsx'));
 const Times = lazy(() => import('./pages/Times.jsx'));
 const More = lazy(() => import('./pages/More.jsx'));
+const WhatsNew = lazy(() => import('./pages/WhatsNew.jsx'));
 
 const TITLES = {
   '/': 'Today', '/streak': 'Track', '/history': 'Log and edit', '/quran': 'Quran', '/nafl': 'Nafl',
   '/friends': 'Friends', '/challenges': 'Challenges', '/challenges/personal': 'Personal challenges',
   '/badges': 'Badges', '/report': 'Weekly report', '/profile': 'Profile', '/ramadan/map': 'Ramadan map',
-  '/times': 'Prayer times', '/more': 'More',
+  '/times': 'Prayer times', '/more': 'More', '/whats-new': "What's new",
   '/login': 'Sign in', '/signup': 'Sign up', '/forgot-password': 'Forgot password', '/reset-password': 'Reset password',
 };
 
@@ -63,6 +64,7 @@ export default function App() {
             <Route path="/ramadan/map" element={<RamadanMap />} />
             <Route path="/times" element={<Times />} />
             <Route path="/more" element={<More />} />
+            <Route path="/whats-new" element={<WhatsNew />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

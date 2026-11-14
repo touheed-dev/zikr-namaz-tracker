@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 const BUILD_ID = Date.now().toString(36);
 
 // Stamp a unique build id into dist/sw.js so every deploy installs a new
@@ -24,6 +25,7 @@ function stampServiceWorker(id) {
 export default defineConfig({
   define: {
     __BUILD__: JSON.stringify(BUILD_ID),
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   plugins: [react(), stampServiceWorker(BUILD_ID)],
   server: { port: 5173, strictPort: true },

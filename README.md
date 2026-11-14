@@ -25,6 +25,11 @@
 
 ## What's new
 
+### v1.5.0 — 14 Nov 2026: What's new & announcement carousel
+- Dedicated What's New screen to browse release history and updates anytime.
+- Interactive announcement carousel highlighting new features on Today.
+- Real app version numbers with update indicators in More settings.
+
 ### v1.4.3 — 14 Nov 2026: Audio rendering experiment
 - Persistent audio rendering experiment to investigate Android background playback notifications (lock-screen controls still don't appear on some devices like iQOO; planned fix in the v2.0 Android app).
 
@@ -321,6 +326,21 @@ Ideas under consideration for upcoming iterations (explorations, not binding com
 - **PWA Installation Experience**: Polished install prompts and deeper offline caching for remote areas.
 - **Internationalization**: Full interface translations for Arabic and Urdu.
 - **Hijri Ramadan Automation**: Automatic detection of upcoming fasting seasons without manual offset updates.
+
+---
+
+## Contributing
+
+Contributions are welcome! Please ensure all tests, lint checks, and production builds pass before opening a pull request:
+
+```bash
+cd web && npm test
+cd web && npm run lint
+cd web && npm run build
+```
+
+> [!NOTE]
+> Every feature PR must add an entry to `web/src/data/releases.js` and bump `web/package.json` version.
 
 ---
 

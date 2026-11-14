@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-11-14
+
+### Added
+- Dedicated What's New screen (`/whats-new`) displaying application release history with highlights and "New" badge indicators.
+- Single source of truth for releases and announcements in `web/src/data/releases.js`.
+- Horizontal swipeable announcement carousel (`AnnouncementCarousel.jsx`) on Today and Ramadan Today screens using CSS scroll-snap, with dots indicators, desktop navigation arrows, keyboard accessibility, and reduced-motion support.
+- Generalized gold notification dot badges across navigation tabs and More settings based on active, undismissed announcements.
+- Version display in `web/package.json` (`1.5.0`) exposed via `__APP_VERSION__` Vite define, with secondary build stamp display on the More screen.
+- Automatic migration of legacy announcement dismissal key (`zn_announce_global` -> `zn_dismissed_announcements`).
+
 ## [1.4.3] - 2026-11-14
 
 ### Changed

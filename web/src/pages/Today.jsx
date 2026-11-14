@@ -8,8 +8,7 @@ import { usePrayerTimes } from '../hooks/usePrayerTimes.js';
 import { useNow } from '../hooks/useNow.js';
 import { PrayerRow } from '../components/prayer/PrayerRow.jsx';
 import { HadithCard } from '../components/ui/HadithCard.jsx';
-import { GlobalAnnouncementCard } from '../components/ui/GlobalAnnouncementCard.jsx';
-import { Card, Icon, Skeleton, ErrorState } from '../components/ui/index.jsx';
+import { Card, Icon, Skeleton, ErrorState, AnnouncementCarousel } from '../components/ui/index.jsx';
 import { formatDay, dayOfYear } from '../utils/dates.js';
 import { PRAYERS, PRAYER_LABELS, DONE_STATUSES, NAFL_ITEMS, formatPoints, paraLabel } from '../utils/points.js';
 import { formatTime12, minutesUntil, getCurrentAndNextPrayer, formatLiveCountdown } from '../utils/prayerTimes.js';
@@ -133,7 +132,7 @@ function NormalToday() {
         </Link>
       </header>
 
-      <GlobalAnnouncementCard />
+      <AnnouncementCarousel />
 
       <div className="grid-2">
         <div className="stat">

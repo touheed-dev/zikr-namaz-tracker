@@ -1112,3 +1112,111 @@
   font-weight: 700;
   color: var(--text);
 }
+
+/* ------------------------------------------- announcement carousel */
+.announcement-carousel {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+  outline: none;
+}
+.announcement-carousel:focus-visible {
+  box-shadow: 0 0 0 2px var(--gold);
+  border-radius: var(--r-md);
+}
+.announcement-carousel__viewport {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.announcement-carousel__track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  width: 100%;
+  border-radius: var(--r-md);
+}
+.announcement-carousel__track::-webkit-scrollbar {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .announcement-carousel__track {
+    scroll-behavior: auto;
+  }
+}
+.announcement-carousel__slide {
+  flex: 0 0 100%;
+  min-width: 100%;
+  max-width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  box-sizing: border-box;
+}
+.announcement-carousel__arrow {
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+.announcement-carousel__arrow:hover:not(:disabled) {
+  background: var(--card-deep);
+}
+.announcement-carousel__arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.announcement-carousel__arrow--prev {
+  left: -14px;
+}
+.announcement-carousel__arrow--next {
+  right: -14px;
+}
+@media (min-width: 768px) {
+  .announcement-carousel__arrow {
+    display: inline-flex;
+  }
+}
+.announcement-carousel__dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.announcement-carousel__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gold) 35%, transparent);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+.announcement-carousel__dot--active {
+  background: var(--gold);
+  transform: scale(1.25);
+}
+.announcement-carousel__dot:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
