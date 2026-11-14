@@ -38,16 +38,52 @@ export function collectDiagnostics(audioEl, mediaErrors, userGesture, customBuil
   if (audioEl) {
     let isDisplayNone = false;
     let computedDisplay = 'unknown';
+    let computedVisibility = 'unknown';
+    let computedOpacity = 'unknown';
+    let computedWidth = 'unknown';
+    let computedHeight = 'unknown';
+    let rect = null;
+    let intersectsViewport = false;
+
     try {
       const comp = window.getComputedStyle(audioEl);
       computedDisplay = comp.display;
+      computedVisibility = comp.visibility;
+      computedOpacity = comp.opacity;
+      computedWidth = comp.width;
+      computedHeight = comp.height;
       isDisplayNone = comp.display === 'none';
+
+      if (typeof audioEl.getBoundingClientRect === 'function') {
+        const r = audioEl.getBoundingClientRect();
+        rect = {
+          top: Number(r.top.toFixed(1)),
+          left: Number(r.left.toFixed(1)),
+          bottom: Number(r.bottom.toFixed(1)),
+          right: Number(r.right.toFixed(1)),
+          width: Number(r.width.toFixed(1)),
+          height: Number(r.height.toFixed(1)),
+        };
+
+        const vpWidth = window.innerWidth || document.documentElement?.clientWidth || 0;
+        const vpHeight = window.innerHeight || document.documentElement?.clientHeight || 0;
+
+        intersectsViewport = (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          rect.bottom > 0 &&
+          rect.right > 0 &&
+          rect.top < vpHeight &&
+          rect.left < vpWidth
+        );
+      }
     } catch {
       // ignore
     }
 
     audioInfo = {
       isConnected: Boolean(audioEl.isConnected),
+      hasControls: Boolean(audioEl.controls),
       paused: Boolean(audioEl.paused),
       muted: Boolean(audioEl.muted),
       volume: typeof audioEl.volume === 'number' ? audioEl.volume : null,
@@ -60,6 +96,12 @@ export function collectDiagnostics(audioEl, mediaErrors, userGesture, customBuil
       preload: audioEl.preload || '(none)',
       isDisplayNone,
       computedDisplay,
+      computedVisibility,
+      computedOpacity,
+      computedWidth,
+      computedHeight,
+      rect,
+      intersectsViewport,
     };
   }
 
@@ -143,7 +185,12 @@ export function formatDiagnosticsText(diag) {
     diag.audioInfo
       ? [
           `isConnected: ${diag.audioInfo.isConnected}`,
-          `display:none: ${diag.audioInfo.isDisplayNone} (computed display: ${diag.audioInfo.computedDisplay})`,
+          `controls: ${diag.audioInfo.hasControls}`,
+          `display: ${diag.audioInfo.computedDisplay} (display:none: ${diag.audioInfo.isDisplayNone})`,
+          `visibility: ${diag.audioInfo.computedVisibility}`,
+          `opacity: ${diag.audioInfo.computedOpacity}`,
+          `width / height: ${diag.audioInfo.computedWidth} × ${diag.audioInfo.computedHeight}`,
+          `intersects viewport: ${diag.audioInfo.intersectsViewport}${diag.audioInfo.rect ? ` [top:${diag.audioInfo.rect.top}, left:${diag.audioInfo.rect.left}, w:${diag.audioInfo.rect.width}, h:${diag.audioInfo.rect.height}]` : ''}`,
           `paused: ${diag.audioInfo.paused}`,
           `muted: ${diag.audioInfo.muted}`,
           `volume: ${diag.audioInfo.volume}`,

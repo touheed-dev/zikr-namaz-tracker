@@ -24,7 +24,7 @@ test('collectDiagnostics handles undefined window / mock environment', () => {
   assert.equal(diag.audioInfo, null);
 });
 
-test('formatDiagnosticsText formats all required sections', () => {
+test('formatDiagnosticsText formats all required sections including visibility, opacity, rect', () => {
   const diag = {
     timestamp: '10:00:00 AM',
     buildStamp: 'test-build-1',
@@ -41,6 +41,7 @@ test('formatDiagnosticsText formats all required sections', () => {
     },
     audioInfo: {
       isConnected: true,
+      hasControls: true,
       paused: false,
       muted: false,
       volume: 1,
@@ -53,6 +54,12 @@ test('formatDiagnosticsText formats all required sections', () => {
       preload: 'metadata',
       isDisplayNone: false,
       computedDisplay: 'block',
+      computedVisibility: 'visible',
+      computedOpacity: '1',
+      computedWidth: '350px',
+      computedHeight: '54px',
+      rect: { top: 120, left: 20, bottom: 174, right: 370, width: 350, height: 54 },
+      intersectsViewport: true,
     },
     counts: {
       audio: 1,
@@ -79,7 +86,12 @@ test('formatDiagnosticsText formats all required sections', () => {
   assert.ok(text.includes('Yasser Al-Dosari'));
   assert.ok(text.includes('https://example.com/icon-96.png'));
   assert.ok(text.includes('isConnected: true'));
-  assert.ok(text.includes('display:none: false'));
+  assert.ok(text.includes('controls: true'));
+  assert.ok(text.includes('display: block (display:none: false)'));
+  assert.ok(text.includes('visibility: visible'));
+  assert.ok(text.includes('opacity: 1'));
+  assert.ok(text.includes('width / height: 350px × 54px'));
+  assert.ok(text.includes('intersects viewport: true'));
   assert.ok(text.includes('https://server11.mp3quran.net/yasser/001.mp3'));
   assert.ok(text.includes('<audio> count: 1'));
   assert.ok(text.includes('<video> count: 0'));
