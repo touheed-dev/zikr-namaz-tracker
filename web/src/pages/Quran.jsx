@@ -14,6 +14,7 @@ import {
   ErrorState,
   Tabs,
   Skeleton,
+  MediaDiagnostics,
 } from '../components/ui/index.jsx';
 import { PageHead } from '../components/layout/AppShell.jsx';
 import { addDays, startOfWeek, daysBetween, isoWeekday } from '../utils/dates.js';
@@ -231,6 +232,7 @@ export default function Quran() {
   return (
     <>
       <PageHead title="Quran" />
+      {searchParams.get('debug') === '1' && <MediaDiagnostics />}
       <Tabs
         label="Quran sections"
         items={QURAN_TABS}
