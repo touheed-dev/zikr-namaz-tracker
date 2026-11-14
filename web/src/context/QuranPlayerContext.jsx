@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from './AuthContext.jsx';
 import { useToast } from './ToastContext.jsx';
 import { quranListen } from '../api/index.js';
@@ -16,12 +17,27 @@ import { getItem, setItem } from '../utils/storage.js';
 const QuranPlayerContext = createContext(null);
 
 const RECITER_STORAGE_KEY = 'zn_quran_reciter';
+const NATIVE_CONTROLS_KEY = 'zn_show_native_audio_controls';
 
 export function QuranPlayerProvider({ children }) {
   const { status } = useAuth();
   const toast = useToast();
 
   const audioRef = useRef(null);
+
+  const [showNativeControls, setShowNativeControlsState] = useState(() => {
+    return getItem(NATIVE_CONTROLS_KEY, 'false') === 'true';
+  });
+  const [audioSlotNode, setAudioSlotNode] = useState(null);
+
+  const setShowNativeControls = useCallback((val) => {
+    setShowNativeControlsState(Boolean(val));
+    setItem(NATIVE_CONTROLS_KEY, val ? 'true' : 'false');
+  }, []);
+
+  const registerAudioSlot = useCallback((node) => {
+    setAudioSlotNode(node);
+  }, []);
 
   const [reciters, setReciters] = useState([]);
   const [recitersLoading, setRecitersLoading] = useState(true);
@@ -725,10 +741,20 @@ export function QuranPlayerProvider({ children }) {
     setMediaPlaybackState(isPlaying ? 'playing' : 'paused');
   }, [isPlaying, currentSurah, setMediaPlaybackState]);
 
+  // Ensure playback is not interrupted if the audio element moves into/out of slot
+  useEffect(() => {
+    if (isPlayingRef.current && audioRef.current && audioRef.current.paused) {
+      audioRef.current.play().catch(() => {});
+    }
+  }, [showNativeControls, audioSlotNode]);
+
   const value = {
     audioRef,
     mediaSessionErrors,
     userGestureFlag,
+    showNativeControls,
+    setShowNativeControls,
+    registerAudioSlot,
     reciters,
     recitersLoading,
     recitersError,
@@ -758,64 +784,82 @@ export function QuranPlayerProvider({ children }) {
     resumeKhatam,
   };
 
+  const isNativeControlsVisible = Boolean(showNativeControls && audioSlotNode);
+
+  const audioEl = (
+    /* eslint-disable-next-line jsx-a11y/media-has-caption */
+    <audio
+      ref={audioRef}
+      controls={isNativeControlsVisible}
+      preload="metadata"
+      muted={false}
+      aria-hidden={isNativeControlsVisible ? undefined : 'true'}
+      style={
+        isNativeControlsVisible
+          ? {
+              display: 'block',
+              width: '100%',
+              marginTop: '8px',
+              marginBottom: '8px',
+            }
+          : {
+              display: 'block',
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              width: '1px',
+              height: '1px',
+              opacity: 0.01,
+              pointerEvents: 'none',
+              zIndex: -1,
+            }
+      }
+      onPlaying={() => {
+        lastPlayTimestampRef.current = Date.now();
+        setIsPlaying(true);
+        setAudioLoading(false);
+        updateMediaMetadata();
+        setMediaPlaybackState('playing');
+      }}
+      onPause={() => {
+        capturePlayedTime();
+        lastPlayTimestampRef.current = null;
+        setIsPlaying(false);
+        setMediaPlaybackState('paused');
+      }}
+      onWaiting={() => {
+        capturePlayedTime();
+        lastPlayTimestampRef.current = null;
+        setAudioLoading(true);
+      }}
+      onSeeking={() => {
+        capturePlayedTime();
+        lastPlayTimestampRef.current = null;
+      }}
+      onSeeked={() => {
+        if (audioRef.current && !audioRef.current.paused) {
+          lastPlayTimestampRef.current = Date.now();
+        }
+      }}
+      onTimeUpdate={onTimeUpdate}
+      onLoadedMetadata={onLoadedMetadata}
+      onCanPlay={() => setAudioLoading(false)}
+      onEnded={onEnded}
+      onError={() => {
+        capturePlayedTime();
+        lastPlayTimestampRef.current = null;
+        setAudioLoading(false);
+        setIsPlaying(false);
+        setMediaPlaybackState('paused');
+        setAudioError('Failed to stream audio from mp3quran.net');
+      }}
+    />
+  );
+
   return (
     <QuranPlayerContext.Provider value={value}>
       {children}
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <audio
-        ref={audioRef}
-        preload="metadata"
-        muted={false}
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          width: '1px',
-          height: '1px',
-          opacity: 0.01,
-          pointerEvents: 'none',
-          zIndex: -1,
-        }}
-        onPlaying={() => {
-          lastPlayTimestampRef.current = Date.now();
-          setIsPlaying(true);
-          setAudioLoading(false);
-          updateMediaMetadata();
-          setMediaPlaybackState('playing');
-        }}
-        onPause={() => {
-          capturePlayedTime();
-          lastPlayTimestampRef.current = null;
-          setIsPlaying(false);
-          setMediaPlaybackState('paused');
-        }}
-        onWaiting={() => {
-          capturePlayedTime();
-          lastPlayTimestampRef.current = null;
-          setAudioLoading(true);
-        }}
-        onSeeking={() => {
-          capturePlayedTime();
-          lastPlayTimestampRef.current = null;
-        }}
-        onSeeked={() => {
-          if (audioRef.current && !audioRef.current.paused) {
-            lastPlayTimestampRef.current = Date.now();
-          }
-        }}
-        onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={onLoadedMetadata}
-        onCanPlay={() => setAudioLoading(false)}
-        onEnded={onEnded}
-        onError={() => {
-          capturePlayedTime();
-          lastPlayTimestampRef.current = null;
-          setAudioLoading(false);
-          setIsPlaying(false);
-          setMediaPlaybackState('paused');
-          setAudioError('Failed to stream audio from mp3quran.net');
-        }}
-      />
+      {isNativeControlsVisible ? createPortal(audioEl, audioSlotNode) : audioEl}
     </QuranPlayerContext.Provider>
   );
 }

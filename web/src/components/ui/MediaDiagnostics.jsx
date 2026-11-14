@@ -1,16 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Card } from './index.jsx';
+import { Card, Switch } from './index.jsx';
 import { useQuranPlayer } from '../../context/QuranPlayerContext.jsx';
 import { collectDiagnostics, formatDiagnosticsText } from '../../utils/mediaDiagnostics.js';
 
 export function MediaDiagnostics() {
   const player = useQuranPlayer();
+  const {
+    audioRef,
+    mediaSessionErrors,
+    userGestureFlag,
+    showNativeControls,
+    setShowNativeControls,
+    registerAudioSlot,
+  } = player;
+
   const [copied, setCopied] = useState(false);
   const [data, setData] = useState(() =>
     collectDiagnostics(
-      player.audioRef?.current,
-      player.mediaSessionErrors,
-      player.userGestureFlag,
+      audioRef?.current,
+      mediaSessionErrors,
+      userGestureFlag,
     ),
   );
 
@@ -18,16 +27,24 @@ export function MediaDiagnostics() {
     const update = () => {
       setData(
         collectDiagnostics(
-          player.audioRef?.current,
-          player.mediaSessionErrors,
-          player.userGestureFlag,
+          audioRef?.current,
+          mediaSessionErrors,
+          userGestureFlag,
         ),
       );
     };
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [player.audioRef, player.mediaSessionErrors, player.userGestureFlag]);
+  }, [audioRef, mediaSessionErrors, userGestureFlag]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof registerAudioSlot === 'function') {
+        registerAudioSlot(null);
+      }
+    };
+  }, [registerAudioSlot]);
 
   const handleCopy = useCallback(() => {
     if (!data) return;
@@ -60,6 +77,25 @@ export function MediaDiagnostics() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13 }}>
         <div style={{ background: 'var(--bg-hover, rgba(255,255,255,0.04))', padding: 10, borderRadius: 8 }}>
+          <div style={{ fontWeight: 600, marginBottom: 8 }}>Experiment: Native Audio Controls</div>
+          <Switch
+            label="Show native audio controls"
+            hint="Renders the persistent <audio controls> full width inside this card without interrupting playback."
+            checked={showNativeControls}
+            onChange={setShowNativeControls}
+          />
+          <div
+            ref={registerAudioSlot}
+            style={{
+              display: showNativeControls ? 'block' : 'none',
+              width: '100%',
+              minHeight: showNativeControls ? 54 : 0,
+              marginTop: showNativeControls ? 8 : 0,
+            }}
+          />
+        </div>
+
+        <div style={{ background: 'var(--bg-hover, rgba(255,255,255,0.04))', padding: 10, borderRadius: 8 }}>
           <div style={{ fontWeight: 600, marginBottom: 4 }}>MediaSession API</div>
           <div>&apos;mediaSession&apos; in navigator: <strong>{data.hasMediaSession ? 'Yes' : 'No'}</strong></div>
           <div>Playback state: <strong>{data.playbackState}</strong></div>
@@ -90,8 +126,25 @@ export function MediaDiagnostics() {
           {data.audioInfo ? (
             <>
               <div>Connected in DOM: <strong>{data.audioInfo.isConnected ? 'Yes' : 'No'}</strong></div>
+              <div>Native controls attribute: <strong>{data.audioInfo.hasControls ? 'Yes' : 'No'}</strong></div>
               <div>
-                display:none: <strong>{data.audioInfo.isDisplayNone ? 'YES (Warning: hidden)' : 'No'}</strong> (computed: {data.audioInfo.computedDisplay})
+                display: <strong>{data.audioInfo.computedDisplay}</strong> {data.audioInfo.isDisplayNone && (
+                  <span style={{ color: 'var(--danger, #f87171)' }}>(Warning: display:none)</span>
+                )}
+              </div>
+              <div>
+                visibility: <strong>{data.audioInfo.computedVisibility}</strong> | opacity: <strong>{data.audioInfo.computedOpacity}</strong>
+              </div>
+              <div>
+                width / height: <strong>{data.audioInfo.computedWidth} × {data.audioInfo.computedHeight}</strong>
+              </div>
+              <div>
+                Intersects viewport: <strong>{data.audioInfo.intersectsViewport ? 'Yes' : 'No'}</strong>
+                {data.audioInfo.rect && (
+                  <span className="tiny muted" style={{ marginLeft: 6 }}>
+                    ({data.audioInfo.rect.width}×{data.audioInfo.rect.height} at top:{data.audioInfo.rect.top}, left:{data.audioInfo.rect.left})
+                  </span>
+                )}
               </div>
               <div>Paused: <strong>{data.audioInfo.paused ? 'Yes' : 'No'}</strong></div>
               <div>Muted: <strong>{data.audioInfo.muted ? 'Yes' : 'No'}</strong> | Volume: <strong>{data.audioInfo.volume}</strong></div>
