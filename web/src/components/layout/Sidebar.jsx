@@ -3,8 +3,9 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth, useToday } from '../../context/AuthContext.jsx';
 import { useMode } from '../../context/ModeContext.jsx';
 import {
-  shouldShowGlobalAnnouncement,
-  isGlobalAnnouncementDismissed,
+  getActiveNavDots,
+  getDismissedAnnouncementIds,
+  hasUnseenReleases,
 } from '../../utils/announcements.js';
 import { Icon, Avatar } from '../ui/index.jsx';
 import { NORMAL_TABS, RAMADAN_TABS, MORE_ROUTES } from './AppShell.jsx';
@@ -14,22 +15,30 @@ export function Sidebar() {
   const { user } = useAuth();
   const today = useToday();
   const location = useLocation();
-  const [dismissed, setDismissed] = useState(() => isGlobalAnnouncementDismissed());
+  const [dismissedIds, setDismissedIds] = useState(() => getDismissedAnnouncementIds());
+  const [unseen, setUnseen] = useState(() => hasUnseenReleases());
 
   useEffect(() => {
-    const handler = () => setDismissed(isGlobalAnnouncementDismissed());
-    window.addEventListener('zn:announce_dismissed', handler);
-    window.addEventListener('storage', handler);
+    const handleDismissed = () => setDismissedIds(getDismissedAnnouncementIds());
+    const handleSeen = () => setUnseen(hasUnseenReleases());
+    const handleStorage = () => {
+      setDismissedIds(getDismissedAnnouncementIds());
+      setUnseen(hasUnseenReleases());
+    };
+    window.addEventListener('zn:announce_dismissed', handleDismissed);
+    window.addEventListener('zn:release_seen', handleSeen);
+    window.addEventListener('storage', handleStorage);
     return () => {
-      window.removeEventListener('zn:announce_dismissed', handler);
-      window.removeEventListener('storage', handler);
+      window.removeEventListener('zn:announce_dismissed', handleDismissed);
+      window.removeEventListener('zn:release_seen', handleSeen);
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
-  const showGlobalDot = shouldShowGlobalAnnouncement({
+  const activeNavDots = getActiveNavDots({
     today,
-    optedIn: Boolean(user?.settings?.showOnGlobal),
-    dismissed,
+    user,
+    dismissedIds,
   });
 
   const isMoreRoute = MORE_ROUTES.some(
@@ -49,7 +58,7 @@ export function Sidebar() {
 
       <nav className="sidebar__nav" aria-label="Sidebar">
         {tabs.map((t) => {
-          const showDot = t.to === '/friends' && showGlobalDot;
+          const showDot = activeNavDots.has(t.to) || (t.to === '/more' && (activeNavDots.has('/times') || unseen));
           const isMoreTab = t.to === '/more';
           const isActive = isMoreTab
             ? isMoreRoute
