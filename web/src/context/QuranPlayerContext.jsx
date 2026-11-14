@@ -57,6 +57,19 @@ export function QuranPlayerProvider({ children }) {
   const pendingInitialSeekRef = useRef(null);
   const lastPositionStateUpdateRef = useRef(0);
 
+  const [mediaSessionErrors, setMediaSessionErrors] = useState([]);
+  const [userGestureFlag, setUserGestureFlag] = useState(false);
+
+  const logMediaError = useCallback((context, err) => {
+    console.error(`MediaSession [${context}] error:`, err);
+    const entry = {
+      time: new Date().toLocaleTimeString(),
+      context,
+      message: err?.message || String(err),
+    };
+    setMediaSessionErrors((prev) => [entry, ...prev].slice(0, 10));
+  }, []);
+
   const currentSurahRef = useRef(currentSurah);
   currentSurahRef.current = currentSurah;
   const modeRef = useRef(mode);
@@ -206,8 +219,48 @@ export function QuranPlayerProvider({ children }) {
     }
   }, [status, selectedReciter, notifyListenError]);
 
+  const updateMediaMetadata = useCallback((surahNum = currentSurahRef.current, reciter = selectedReciter) => {
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator) || typeof window === 'undefined') return;
+    const num = surahNum || currentSurahRef.current;
+    if (!num) return;
+
+    const s = SURAHS.find((item) => item.n === num);
+    const surahName = s ? s.en : `Surah ${num}`;
+    const title = `Surah ${num}. ${surahName}`;
+    const artist = reciter?.displayName || 'Reciter';
+    const album = 'Zikr & Namaz';
+
+    if (typeof window.MediaMetadata !== 'undefined') {
+      try {
+        const origin = window.location.origin;
+        navigator.mediaSession.metadata = new window.MediaMetadata({
+          title,
+          artist,
+          album,
+          artwork: [
+            { src: `${origin}/icon-96.png`, sizes: '96x96', type: 'image/png' },
+            { src: `${origin}/icon-192.png`, sizes: '192x192', type: 'image/png' },
+            { src: `${origin}/icon-512.png`, sizes: '512x512', type: 'image/png' },
+          ],
+        });
+      } catch (err) {
+        logMediaError('metadata', err);
+      }
+    }
+  }, [selectedReciter, logMediaError]);
+
+  const setMediaPlaybackState = useCallback((state) => {
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.playbackState = state;
+    } catch (err) {
+      logMediaError('playbackState', err);
+    }
+  }, [logMediaError]);
+
   // Main play function
   const playSurah = useCallback((surahNumber, options = {}) => {
+    setUserGestureFlag(true);
     const num = Number(surahNumber);
     if (!num || num < 1 || num > 114) return false;
 
@@ -260,13 +313,22 @@ export function QuranPlayerProvider({ children }) {
         audioRef.current.currentTime = initialPos;
         pendingInitialSeekRef.current = null;
       }
+
+      // Set metadata and playback state before play()
+      updateMediaMetadata(num, reciter);
+      setMediaPlaybackState('playing');
+
       audioRef.current.play().then(() => {
         setIsPlaying(true);
+        // CRITICAL FIX: Re-set metadata after play() resolves
+        updateMediaMetadata(num, reciter);
+        setMediaPlaybackState('playing');
       }).catch((err) => {
         if (err.name !== 'AbortError') {
           setAudioError('Playback failed. Tap play to start.');
         }
         setIsPlaying(false);
+        setMediaPlaybackState('paused');
       });
     }
 
@@ -275,7 +337,7 @@ export function QuranPlayerProvider({ children }) {
     }
 
     return true;
-  }, [reciters, selectedReciter, savePosition, status, capturePlayedTime, flushSeconds]);
+  }, [reciters, selectedReciter, savePosition, status, capturePlayedTime, flushSeconds, updateMediaMetadata, setMediaPlaybackState]);
 
   const pause = useCallback(() => {
     if (audioRef.current) {
@@ -284,13 +346,15 @@ export function QuranPlayerProvider({ children }) {
     capturePlayedTime();
     lastPlayTimestampRef.current = null;
     setIsPlaying(false);
+    setMediaPlaybackState('paused');
     flushSeconds();
     if (modeRef.current === 'khatam' && currentSurahRef.current) {
       savePosition(currentSurahRef.current, currentTimeRef.current, true);
     }
-  }, [capturePlayedTime, flushSeconds, savePosition]);
+  }, [capturePlayedTime, flushSeconds, savePosition, setMediaPlaybackState]);
 
   const resume = useCallback(() => {
+    setUserGestureFlag(true);
     if (audioRef.current && currentSurahRef.current) {
       const cur = audioRef.current.currentTime || currentTimeRef.current || 0;
       const target = rewindPosition(cur, REWIND_SECONDS.PAUSE);
@@ -300,17 +364,27 @@ export function QuranPlayerProvider({ children }) {
         console.error('Failed to set rewind currentTime on resume:', err);
       }
       setCurrentTime(target);
+
+      updateMediaMetadata();
+      setMediaPlaybackState('playing');
+
       audioRef.current.play().then(() => {
         setIsPlaying(true);
+        // CRITICAL FIX: Re-set metadata after play() resolves
+        updateMediaMetadata();
+        setMediaPlaybackState('playing');
       }).catch((err) => {
         if (err.name !== 'AbortError') {
           setAudioError('Could not resume audio');
         }
+        setIsPlaying(false);
+        setMediaPlaybackState('paused');
       });
     }
-  }, []);
+  }, [updateMediaMetadata, setMediaPlaybackState]);
 
   const togglePlay = useCallback(() => {
+    setUserGestureFlag(true);
     if (isPlaying) {
       pause();
     } else {
@@ -362,7 +436,8 @@ export function QuranPlayerProvider({ children }) {
     setIsPlaying(false);
     setAudioLoading(false);
     setAudioError(null);
-  }, [pause]);
+    setMediaPlaybackState('none');
+  }, [pause, setMediaPlaybackState]);
 
   const resumeKhatam = useCallback(() => {
     const pos = summary?.position;
@@ -448,9 +523,9 @@ export function QuranPlayerProvider({ children }) {
         position: Math.min(Math.max(0, pos), dur),
       });
     } catch (err) {
-      console.error('Failed to set mediaSession.setPositionState:', err);
+      logMediaError('setPositionState', err);
     }
-  }, []);
+  }, [logMediaError]);
 
   // Audio element event listeners
   const onTimeUpdate = () => {
@@ -494,13 +569,18 @@ export function QuranPlayerProvider({ children }) {
         savePosition(currentSurahRef.current, newPos, true);
       }
       if (wasPlaying) {
+        updateMediaMetadata();
+        setMediaPlaybackState('playing');
         audioRef.current.play().then(() => {
           setIsPlaying(true);
+          updateMediaMetadata();
+          setMediaPlaybackState('playing');
         }).catch((err) => {
           if (err.name !== 'AbortError') {
             setAudioError('Playback failed. Tap play to start.');
           }
           setIsPlaying(false);
+          setMediaPlaybackState('paused');
         });
       }
     } else if (pendingInitialSeekRef.current != null) {
@@ -519,6 +599,7 @@ export function QuranPlayerProvider({ children }) {
     capturePlayedTime();
     lastPlayTimestampRef.current = null;
     setIsPlaying(false);
+    setMediaPlaybackState('paused');
     flushSeconds();
     if (modeRef.current === 'khatam' && currentSurahRef.current) {
       if (currentSurahRef.current < 114) {
@@ -585,42 +666,18 @@ export function QuranPlayerProvider({ children }) {
     if (typeof navigator === 'undefined' || !('mediaSession' in navigator) || typeof window === 'undefined') return;
 
     if (!currentSurah) {
-      try {
-        navigator.mediaSession.playbackState = 'none';
-      } catch (err) {
-        console.error('Failed to set mediaSession.playbackState to none:', err);
-      }
+      setMediaPlaybackState('none');
       return;
     }
 
-    const s = SURAHS.find((item) => item.n === currentSurah);
-    const surahName = s ? s.en : `Surah ${currentSurah}`;
-    const title = `Surah ${currentSurah}. ${surahName}`;
-    const artist = selectedReciter?.displayName || 'Reciter';
-    const album = 'Zikr & Namaz';
-
-    if (typeof window.MediaMetadata !== 'undefined') {
-      try {
-        navigator.mediaSession.metadata = new window.MediaMetadata({
-          title,
-          artist,
-          album,
-          artwork: [
-            { src: '/icon-96.png', sizes: '96x96', type: 'image/png' },
-            { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-            { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
-          ],
-        });
-      } catch (err) {
-        console.error('Failed to set mediaSession.metadata:', err);
-      }
-    }
+    updateMediaMetadata(currentSurah, selectedReciter);
+    setMediaPlaybackState(isPlaying ? 'playing' : 'paused');
 
     const setAction = (action, handler) => {
       try {
         navigator.mediaSession.setActionHandler(action, handler);
       } catch (err) {
-        console.error(`MediaSession action "${action}" not supported:`, err);
+        logMediaError(`setActionHandler:${action}`, err);
       }
     };
 
@@ -651,32 +708,27 @@ export function QuranPlayerProvider({ children }) {
         try {
           navigator.mediaSession.setActionHandler(action, null);
         } catch (err) {
-          console.error(`Failed to clear MediaSession action "${action}":`, err);
+          logMediaError(`clearActionHandler:${action}`, err);
         }
       };
       ['play', 'pause', 'previoustrack', 'nexttrack', 'seekto', 'seekbackward', 'seekforward', 'stop'].forEach(clearAction);
     };
-  }, [currentSurah, selectedReciter, resume, pause, previousSurah, nextSurah, seekTo, seekBy, closePlayer]);
+  }, [currentSurah, selectedReciter, isPlaying, resume, pause, previousSurah, nextSurah, seekTo, seekBy, closePlayer, updateMediaMetadata, setMediaPlaybackState, logMediaError]);
 
   // Set playbackState on play/pause
   useEffect(() => {
     if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) return;
     if (!currentSurah) {
-      try {
-        navigator.mediaSession.playbackState = 'none';
-      } catch (err) {
-        console.error('Failed to set mediaSession.playbackState to none:', err);
-      }
+      setMediaPlaybackState('none');
       return;
     }
-    try {
-      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
-    } catch (err) {
-      console.error('Failed to set mediaSession.playbackState:', err);
-    }
-  }, [isPlaying, currentSurah]);
+    setMediaPlaybackState(isPlaying ? 'playing' : 'paused');
+  }, [isPlaying, currentSurah, setMediaPlaybackState]);
 
   const value = {
+    audioRef,
+    mediaSessionErrors,
+    userGestureFlag,
     reciters,
     recitersLoading,
     recitersError,
@@ -714,15 +766,28 @@ export function QuranPlayerProvider({ children }) {
         ref={audioRef}
         preload="metadata"
         muted={false}
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          width: '1px',
+          height: '1px',
+          opacity: 0.01,
+          pointerEvents: 'none',
+          zIndex: -1,
+        }}
         onPlaying={() => {
           lastPlayTimestampRef.current = Date.now();
           setIsPlaying(true);
           setAudioLoading(false);
+          updateMediaMetadata();
+          setMediaPlaybackState('playing');
         }}
         onPause={() => {
           capturePlayedTime();
           lastPlayTimestampRef.current = null;
           setIsPlaying(false);
+          setMediaPlaybackState('paused');
         }}
         onWaiting={() => {
           capturePlayedTime();
@@ -747,6 +812,7 @@ export function QuranPlayerProvider({ children }) {
           lastPlayTimestampRef.current = null;
           setAudioLoading(false);
           setIsPlaying(false);
+          setMediaPlaybackState('paused');
           setAudioError('Failed to stream audio from mp3quran.net');
         }}
       />

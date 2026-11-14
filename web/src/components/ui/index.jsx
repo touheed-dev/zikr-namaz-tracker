@@ -3,6 +3,7 @@ import { Icon } from './Icon.jsx';
 
 export { Icon };
 export { QuranMiniPlayer } from './QuranMiniPlayer.jsx';
+export { MediaDiagnostics } from './MediaDiagnostics.jsx';
 
 export function Card({ title, aside, children, className = '', as: Tag = 'section', ...rest }) {
   return (

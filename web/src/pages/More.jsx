@@ -111,6 +111,10 @@ export default function More() {
           ))}
         </nav>
       </Card>
+
+      <div className="tiny muted center mt-16 pb-16">
+        Version {typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'dev'}
+      </div>
     </>
   );
 }
