@@ -92,6 +92,12 @@ export function formatShort(iso) {
   return `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 }
 
+/** "14 Nov 2026" (en-GB day month year) */
+export function formatReleaseDate(iso) {
+  const d = parseISO(iso);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 export function weekdayShort(iso) {
   return WEEKDAYS[parseISO(iso).getDay()];
 }

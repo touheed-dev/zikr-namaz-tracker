@@ -31,19 +31,17 @@ export const RELEASES = [
   {
     version: '1.4.3',
     date: '2026-11-14',
-    title: 'Audio Playback Refinements',
+    title: 'Audio playback improvements',
     highlights: [
-      'Refined background audio playback integration for mobile browsers',
-      'Enhanced playback diagnostics and native controls testing',
+      'Behind-the-scenes work on background audio',
     ],
   },
   {
     version: '1.4.2',
     date: '2026-11-14',
-    title: 'Audio Diagnostics & Controls',
+    title: 'Version info',
     highlights: [
-      'Improved lock screen media controls and notification synchronization',
-      'App build and cache status indicators in More settings',
+      'App version now shown on the More page',
     ],
   },
   {
@@ -53,7 +51,7 @@ export const RELEASES = [
     highlights: [
       'Default Asr prayer calculation set to Hanafi jurisprudence',
       'Refined 7-day prayer timetable view with compact timings',
-      'Smoother seek and skip buttons on the lock screen audio player',
+      'Smoother seek and skip buttons in the Quran player',
     ],
   },
   {
@@ -112,7 +110,7 @@ export const RELEASES = [
       'Crystal-clear audio streaming from 7 renowned Hafs reciters',
       'Continue My Khatam mode with automatic surah-by-surah progression',
       'Friday Sunnah recitations card featuring Surah Al-Kahf on Jumu’ah',
-      'Floating mini-player bar and background lock screen controls',
+      'Floating mini-player bar with convenient playback controls',
       'Strictly private listening history and progress',
     ],
   },

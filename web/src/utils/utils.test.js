@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  addDays, daysBetween, startOfWeek, isoWeekday, todayInTimeZone, formatDay, windowDaysLeft, dayOfYear, toISODate,
+  addDays, daysBetween, startOfWeek, isoWeekday, todayInTimeZone, formatDay, formatReleaseDate, windowDaysLeft, dayOfYear, toISODate,
 } from './dates.js';
 import { paraLabel, khatamProgress, quranLevel, formatPoints } from './points.js';
 import { buildNamazGrid, completeDates, currentStreak, bestStreak } from './heatmap.js';
@@ -17,6 +17,8 @@ test('date maths across month and year boundaries', () => {
   assert.equal(startOfWeek('2026-11-15'), '2026-11-09');
   assert.equal(isoWeekday('2026-11-15'), 7);
   assert.equal(formatDay('2026-11-02'), 'Mon, 2 Nov');
+  assert.equal(formatReleaseDate('2026-11-14'), '14 Nov 2026');
+  assert.equal(formatReleaseDate('2026-11-11'), '11 Nov 2026');
   assert.equal(dayOfYear('2026-01-01'), 1);
   assert.equal(dayOfYear('2026-12-31'), 365);
   assert.equal(toISODate(new Date(2026, 0, 5)), '2026-01-05');
