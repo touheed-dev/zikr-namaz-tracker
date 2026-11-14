@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import {
   getPrayerTimes,
   calculatePrayerTimes,
-  getCachedPrayerConfig,
+  getPrayerConfig,
 } from '../utils/prayerTimes.js';
 
 /**
@@ -11,21 +11,14 @@ import {
  */
 export function usePrayerTimes(dateISO) {
   const { user } = useAuth();
-  const s = user?.settings || {};
+  const config = useMemo(() => getPrayerConfig(user?.settings), [user?.settings]);
 
   const [state, setState] = useState(() => {
     if (!dateISO) return { times: null, error: null, loading: true };
     try {
-      const cached = getCachedPrayerConfig();
       const times = calculatePrayerTimes({
         dateISO,
-        lat: s.lat ?? cached?.lat,
-        lng: s.lng ?? cached?.lng,
-        locationLabel: s.locationLabel ?? cached?.locationLabel,
-        method: s.method ?? cached?.method,
-        madhab: s.madhab ?? cached?.madhab ?? s.asr,
-        highLat: s.highLat ?? cached?.highLat,
-        ishaEnd: s.ishaEnd ?? cached?.ishaEnd,
+        ...config,
         timeZone: user?.timezone,
       });
       return { times, error: null, loading: false };
@@ -37,20 +30,13 @@ export function usePrayerTimes(dateISO) {
   useEffect(() => {
     if (!dateISO) return undefined;
     const ctrl = new AbortController();
-    const cached = getCachedPrayerConfig();
 
     getPrayerTimes(
       {
         dateISO,
-        lat: s.lat ?? cached?.lat,
-        lng: s.lng ?? cached?.lng,
-        locationLabel: s.locationLabel ?? cached?.locationLabel,
-        city: s.city,
-        country: s.country,
-        method: s.method ?? cached?.method,
-        madhab: s.madhab ?? cached?.madhab ?? s.asr,
-        highLat: s.highLat ?? cached?.highLat,
-        ishaEnd: s.ishaEnd ?? cached?.ishaEnd,
+        ...config,
+        city: user?.settings?.city,
+        country: user?.settings?.country,
         timeZone: user?.timezone,
       },
       { signal: ctrl.signal },
@@ -64,16 +50,9 @@ export function usePrayerTimes(dateISO) {
     return () => ctrl.abort();
   }, [
     dateISO,
-    s.lat,
-    s.lng,
-    s.locationLabel,
-    s.city,
-    s.country,
-    s.method,
-    s.madhab,
-    s.asr,
-    s.highLat,
-    s.ishaEnd,
+    config,
+    user?.settings?.city,
+    user?.settings?.country,
     user?.timezone,
   ]);
 

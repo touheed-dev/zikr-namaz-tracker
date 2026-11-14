@@ -11,7 +11,7 @@
 .card--outline { background: transparent; border: 1px solid var(--line); }
 .card--gold { border: 1px solid var(--gold); }
 .card--tight { gap: 6px; }
-.card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .card__title { font-size: 16px; font-weight: 600; }
 .card__divider { height: 1px; background: var(--line-soft); margin: 0 -2px; }
 
@@ -1032,7 +1032,8 @@
 }
 .timetable {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 13px;
   text-align: left;
 }
@@ -1048,10 +1049,21 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  background: var(--card);
 }
-.timetable tr.is-today {
+.timetable th:first-child,
+.timetable td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--card);
+  border-right: 1px solid var(--line-soft);
+}
+.timetable tr.is-today td {
   background: var(--card-deep);
-  font-weight: 600;
+}
+.timetable tr.is-today td:first-child {
+  background: var(--card-deep);
 }
 .timetable tr:last-child td {
   border-bottom: none;

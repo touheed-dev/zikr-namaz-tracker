@@ -50,13 +50,6 @@ const MORE_LINKS = [
     hint: 'Goals with friends or just for you',
     icon: 'target',
   },
-  {
-    to: '/times',
-    title: 'Prayer times',
-    hint: 'Daily prayer times by city and calculation method',
-    icon: 'clock',
-    enabled: ENABLE_PRAYER_TIMES,
-  },
 ].filter((item) => item.enabled !== false);
 
 export default function More() {
