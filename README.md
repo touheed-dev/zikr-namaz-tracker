@@ -18,18 +18,45 @@
   <a href="https://zikr-namaz-tracker.vercel.app">Live app</a> ·
   <a href="#whats-new">What's new</a> ·
   <a href="#features">Features</a> ·
+  <a href="#known-issues">Known issues</a> ·
   <a href="#run-locally">Run locally</a> ·
   <a href="docs/ARCHITECTURE.md">Architecture</a>
 </p>
 
 ## What's new
 
+### v1.4.3 — 14 Nov 2026: Audio rendering experiment
+- Persistent audio rendering experiment to investigate Android background playback notifications (lock-screen controls still don't appear on some devices like iQOO; planned fix in the v2.0 Android app).
+
+### v1.4.2 — 14 Nov 2026: Media diagnostics & version stamp
+- Media diagnostics tooling and application version display at the bottom of the More screen.
+- Media session playback state and artwork metadata reliability improvements.
+
+### v1.4.1 — 14 Nov 2026: Timetable polish & Hanafi Asr default
+- Defaulted Asr calculation to Hanafi (2x shadow) with reliable preference saving.
+- Cleaned up Prayer times timetable layout and badges.
+
+### v1.4 — 14 Nov 2026: Offline prayer times & location
+- Accurate prayer times calculated 100% on-device (works completely offline).
+- Dedicated Prayer times timetable (`/times`) with 7-day schedule and live countdown.
+- Location setup via GPS ("Use my location") or city search with privacy-first coordinate rounding (~1 km).
+- Configurable calculation methods, Asr madhab, high-latitude rules, and Isha end time.
+
+### v1.3.2 — 14 Nov 2026: Quran browsing & seek controls
+- Browse Quran by Surah (with search) or by Juz (30 sections with Arabic names).
+- Mini-player -10s / +10s seek buttons and draggable progress bar.
+- "Now Playing" sheet with Arabic and English surah titles, reciter info, and playback scrubber.
+
+### v1.3.1 — 14 Nov 2026: Quran player refinements
+- Automatic rewind on resume (3s after pause, 5s on khatam resume or reciter switch).
+- Accurate listening time tracking and ayah-proportional Khatam progress.
+
 ### v1.3 — 14 Nov 2026: Quran listening
 - Listen to Quran recitations with curated reciters (Hafs 'an 'Asim, Murattal) streamed from [mp3quran.net](https://mp3quran.net)
 - Curated reciters matched at runtime: Yasser Al-Dosari (default), Mishary Rashid Alafasy, Abdul Rahman Al-Sudais, Maher Al-Muaiqly, Saad Al-Ghamdi, Mahmoud Khalil Al-Husary, Abdul Basit Abdul Samad
 - Continue my Khatam: tracks listening progress sequentially through all 114 surahs with auto-advance and debounced position bookmarking
 - Friday Sunnah recitations: special Jumu'ah card on Fridays for Surahs Al-Kahf, Al-Jumu'a, Al-Munaafiqoon, Al-A'laa, and Al-Ghaashiya
-- Global mini-player with Media Session API background controls and lock screen playback
+- Global mini-player with lock-screen playback controls
 - Searchable directory of all 114 surahs with Arabic typography and ayah counts
 - Strictly private: listening time is confidential, never awards leaderboard points, and never marks reading pages automatically
 
@@ -135,7 +162,7 @@ A focused collection of tools designed to help you build regular habits with qui
 - **Nafl & Tahajjud**: Log Tahajjud, Ishraq, Duha, and Awwabin prayers with guaranteed zero public visibility.
 - **Friendly challenges**: Group challenges based on fixed templates (Jumuah together, weekend consistency).
 - **Daily hadith cards**: 10 authenticated hadith on prayer and dhikr rotating daily without bloat.
-- **Local prayer times**: Automatically fetched using the Aladhan API with jurisprudence settings.
+- **Local prayer times**: Computed 100% on-device (works completely offline) via the `adhan` library with configurable calculation methods, Asr jurisprudence, high-latitude rules, and privacy-rounded GPS / city search.
 - **Umm al-Qura Hijri calendar**: Localized calendar calculation with manual ±1 day adjustment.
 - **Data export & account deletion**: One-click JSON data export and complete database account wipe.
 - **Offline support**: Fast service worker caching the application shell for poor connectivity.
@@ -278,9 +305,17 @@ Every commit triggers automated validation across frontend and backend layers:
 
 ---
 
+## Known issues
+
+- **Android lock-screen & notification media controls**: Media notification and lock-screen playback controls still do not appear on some Android Chrome devices (e.g. iQOO / Funtouch OS) due to aggressive OEM background webview restrictions. A native background audio foreground service will resolve this in the planned v2.0 Android app.
+
+---
+
 ## Roadmap
 
 Ideas under consideration for upcoming iterations (explorations, not binding commitments):
+
+- **v2.0 Native Android App**: Dedicated Android application with native background audio foreground service to guarantee lock-screen and notification media controls across all OEM devices.
 
 - **Web Push Notifications**: Privacy-preserving Azan alerts and morning zikr nudges via Web Push API.
 - **PWA Installation Experience**: Polished install prompts and deeper offline caching for remote areas.
@@ -292,7 +327,7 @@ Ideas under consideration for upcoming iterations (explorations, not binding com
 ## Acknowledgements
 
 - Audio recitations streamed from the [mp3quran.net](https://mp3quran.net) public API (Hafs 'an 'Asim, Murattal).
-- Prayer calculations powered by the [Aladhan API](https://aladhan.com/prayer-times-api).
+- Prayer calculations computed on-device using [adhan-js](https://github.com/batoulapps/adhan-js) with city geocoding via [Open-Meteo](https://open-meteo.com).
 - Hijri calendar dates derived from JavaScript `Intl.DateTimeFormat` (Umm al-Qura calendar).
 - Hadith narrations sourced from Sahih al-Bukhari and Sahih Muslim (verified via [sunnah.com](https://sunnah.com)).
 

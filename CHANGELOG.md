@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-11-14
+
+### Changed
+- Persistent `<audio>` element rendered with inline `display: block` (fixed 1px×1px, 0.01 opacity, pointer-events none, aria-hidden), overriding browser user-agent `audio:not([controls]) { display: none }` as an experiment for background playback notifications. Note: Android lock-screen controls still don't appear on some devices (e.g. iQOO) — planned fix in the v2.0 Android app.
+- Experiment toggle on `/quran?debug=1`: "Show native audio controls" with persistent `<audio controls>` element mounted full-width inside the diagnostics card via React portal without playback interruption. Persisted in `localStorage` (`zn_show_native_audio_controls`).
+- Diagnostics enhanced to report computed `visibility`, `opacity`, `width / height`, `controls` attribute status, and viewport intersection (`getBoundingClientRect`).
+
+## [1.4.2] - 2026-11-14
+
+### Added
+- Hidden diagnostics card on `/quran?debug=1` refreshing every second for MediaSession and `<audio>` element state.
+- One-tap "Copy diagnostics" button generating a formatted debug report for clipboard.
+- Unique build stamp (`__BUILD__`) injected into Vite build and service worker cache version (`sw.js`), displayed as small text on the More screen (`/more`).
+
+### Fixed
+- MediaSession setup hardening: re-setting metadata immediately upon `play()` resolution and during `onPlaying`, enforcing absolute artwork URLs (`window.location.origin`), and synchronizing `mediaSession.playbackState` (`playing`, `paused`, `none`). Note: Android lock-screen controls still don't appear on some devices (e.g. iQOO) — planned fix in the v2.0 Android app.
+
+## [1.4.1] - 2026-11-14
+
+### Fixed
+- Asr madhab calculation bug: unified `getPrayerConfig` to map legacy configuration keys (`settings.asr`, numeric method IDs) with precedence and defaulted to Hanafi (2x shadow).
+- Selected madhab and calculation method pills reflect effective configuration with toast feedback on update.
+- Timetable layout polish on `/times`: removed duplicate headers and deduplicated Next prayer badges.
+- Re-anchored lock screen / media session notification playback controls for track skip and seek.
+
 ## [1.4.0] - 2026-11-14
 
 ### Added
